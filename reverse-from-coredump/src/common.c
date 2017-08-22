@@ -22,8 +22,6 @@ unsigned long countvalidaddress(char *filename){
 }
 
 
-#ifdef DATA_LOGGED
-
 //count the number of instructions that have valid data logging
 unsigned long countvalidlog(char * filename){
 	char line[256];
@@ -43,5 +41,3 @@ unsigned long countvalidlog(char * filename){
 	LOG(stdout, "RESULT: Valid Address Number - 0x%lx\n", linenum);
 	return linenum;
 }
-#endif
-

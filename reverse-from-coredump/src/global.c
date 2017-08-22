@@ -2,25 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "access_memory.h"
+
 #include "elf_core.h"
 #include "elf_binary.h"
-#include "insthandler.h"
-#include "disassemble.h"
-#include "thread_selection.h"
 
 char *core_path;
-char *bin_path; 
-char *inst_path; 
+char *bin_path;
+char *inst_path;
 
-
-#ifdef DATA_LOGGED
 char *log_path;
-char *xmm_path; 
-#endif
+char *xmm_path;
 
 #ifdef BIN_ALIAS
-char *sum_path; 
+char *sum_path;
 #endif
 
 
@@ -67,31 +61,26 @@ elf_binary_info *get_bin_info(void){
     return binary_info;
 }
 
-#ifdef DATA_LOGGED
 void set_log_path(char* path){
-	log_path = path; 
+	log_path = path;
 }
 
 char* get_log_path(void){
-	return log_path; 
+	return log_path;
 }
 
 void set_xmm_path(char* path){
-	xmm_path = path; 
+	xmm_path = path;
 }
 
 char* get_xmm_path(void){
-	return xmm_path; 
+	return xmm_path;
 }
-
-#endif
 
 
 #ifdef BIN_ALIAS
 void set_sum_path(char * path){
-	sum_path = path; 
+	sum_path = path;
 }
 
 #endif
-
-

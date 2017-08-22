@@ -15,6 +15,6 @@
 
 #define ME_NMAP -1
 #define ME_NMEM -2
-#define ME_NDUMP -3 
+#define ME_NDUMP -3
 
 #endif

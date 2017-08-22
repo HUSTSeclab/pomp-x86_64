@@ -6,11 +6,12 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+
+#include "elf_core.h"
 #include "elf_binary.h"
 #include "access_memory.h"
 #include "reverse_log.h"
 #include "global.h"
-#include "ia32_reg.h" // obtain from libdisasm
 
 // get the value by the name of register
 int value_of_register(char *reg, Elf32_Addr *value, struct elf_prstatus thread){
@@ -65,8 +66,8 @@ int value_of_register(char *reg, Elf32_Addr *value, struct elf_prstatus thread){
 
 	LOG(stderr, "ERROR: register %s need analysis\n", reg);
 	assert(0);
-out: 
-	return match; 
+out:
+	return match;
 }
 
 /*
@@ -129,16 +130,16 @@ int address_segment(elf_core_info* core_info, Elf32_Addr address){
 			if(address >= mstart && address < mstart + msize){
 				segment = i;
 				break;
-			} 
+			}
 		}
 	}
-	return segment; 
+	return segment;
 }
 
 //Get the offset of memory in file based on its address
 off_t get_offset_from_address(elf_core_info* core_info, Elf32_Addr address){
-	off_t offset; 
-	int segment; 
+	off_t offset;
+	int segment;
 	if((segment = address_segment(core_info, address))<0){
 		return ME_NMAP;
 	}
@@ -151,7 +152,7 @@ off_t get_offset_from_address(elf_core_info* core_info, Elf32_Addr address){
 		return ME_NDUMP;
 	}
 	offset = (Elf32_Off)core_info->phdr[segment].p_offset + address - (Elf32_Addr)core_info->phdr[segment].p_vaddr;
-	return offset; 
+	return offset;
 }
 
 int get_data_from_core(long int start, long int size, char * note_data){
@@ -174,9 +175,9 @@ int get_data_from_core(long int start, long int size, char * note_data){
     return 0;
 }
 
-//determine if the address is executable. 
+//determine if the address is executable.
 int address_executable(elf_core_info* core_info, Elf32_Addr address){
-	int segment; 
+	int segment;
 	if((segment = address_segment(core_info, address))<0)
 		return 0;
 	return (core_info->phdr[segment].p_flags & PF_X) ? 1:0;
@@ -195,7 +196,7 @@ int addr_in_segment(GElf_Phdr phdr, Elf32_Addr addr){
 	return 0;
 }
 
-// get the memory from the file recorded by the NT_FILE information. 
+// get the memory from the file recorded by the NT_FILE information.
 int get_data_from_specified_file(elf_core_info *core_info, elf_binary_info *bin_info, Elf32_Addr address, char *buf, size_t buf_size){
 	int data_obtained = 0;
 	int file_num = -1;
@@ -212,27 +213,27 @@ int get_data_from_specified_file(elf_core_info *core_info, elf_binary_info *bin_
     		if(address >= bin_info->binary_info_set[i].base_address && address < bin_info->binary_info_set[i].end_address){
 			    file_num = i;
 			    break;
-		    } 
+		    }
 	}
 	if(file_num == -1)
 		goto out;
 
 	target_file = &bin_info->binary_info_set[file_num];
-	file_path = target_file->bin_name; 
+	file_path = target_file->bin_name;
 
 	if(target_file->phdr[0].p_vaddr < target_file->base_address)
-		reduce = target_file -> base_address;	
+		reduce = target_file -> base_address;
 
 	for(i=0; i<target_file->phdr_num; i++){
 		if((address-reduce)>=target_file->phdr[i].p_vaddr &&  (address-reduce) < (target_file->phdr[i].p_vaddr + target_file->phdr[i].p_memsz)){
-			phdr_num = i; 
+			phdr_num = i;
 			break;
 		}
 	}
 	if(phdr_num == -1)
 		goto out;
 
-	//LOG(stdout, "DEBUG: the file mapped to address 0x%lx is %s\n", address, file_path);	
+	//LOG(stdout, "DEBUG: the file mapped to address 0x%lx is %s\n", address, file_path);
 	offset = (address-reduce) - target_file->phdr[phdr_num].p_vaddr +  target_file->phdr[phdr_num].p_offset;
 
 	if (( fd = open ( file_path , O_RDONLY , 0)) < 0){
@@ -251,6 +252,6 @@ int get_data_from_specified_file(elf_core_info *core_info, elf_binary_info *bin_
 	}
 	close(fd);
 	return 0;
-out: 
+out:
 	return data_obtained;
 }

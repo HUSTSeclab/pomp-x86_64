@@ -26,40 +26,40 @@ unsigned maxfuncid(void){
 	unsigned id;
 	re_list_t* entry;
 
-	id = 0; 
+	id = 0;
 	list_for_each_entry(entry, &re_ds.head.list, list){
 		if(entry->node_type != InstNode)
-			continue; 
-		id = CAST2_INST(entry->node)->funcid > id ? CAST2_INST(entry->node)->funcid : id; 			
+			continue;
+		id = CAST2_INST(entry->node)->funcid > id ? CAST2_INST(entry->node)->funcid : id;
 	}
-	return id; 
+	return id;
 }
 
 re_list_t * lookfor_inst_nexttocall(re_list_t* instnode){
 
-	re_list_t *entry; 
+	re_list_t *entry;
 	inst_node_t *inst, *curinst;
 	x86_insn_t *x86inst, *curx86inst;
 	//to deal with the cases of recurssion
-	int recnum; 
-	
+	int recnum;
+
 	recnum = 0;
 
 	inst = CAST2_INST(instnode->node);
-	x86inst = &re_ds.instlist[inst->inst_index];		
+	x86inst = &re_ds.instlist[inst->inst_index];
 
-	list_for_each_entry(entry, &re_ds.head.list, list){		
+	list_for_each_entry(entry, &re_ds.head.list, list){
 		if(entry->node_type != InstNode)
-			continue; 	
+			continue;
 
-		curinst = CAST2_INST(entry->node);			
-		curx86inst = &re_ds.instlist[curinst->inst_index];		
+		curinst = CAST2_INST(entry->node);
+		curx86inst = &re_ds.instlist[curinst->inst_index];
 
 
 		if(curx86inst->addr == x86inst->addr)
 			recnum++;
 
-		//find the returned instruction and the recursive layer matches	
+		//find the returned instruction and the recursive layer matches
 		if(x86inst->addr + x86inst->size == curx86inst->addr){
 			if(!recnum)
 				return entry;
@@ -73,10 +73,10 @@ re_list_t * lookfor_inst_nexttocall(re_list_t* instnode){
 void funcid_of_inst(re_list_t* instnode){
 
 	re_list_t* entry, *previnstnode;
-	inst_node_t* previnst; 	
+	inst_node_t* previnst;
 	inst_node_t* inst;
-	x86_insn_t *x86inst; 
-	x86_insn_t *prevx86inst; 
+	x86_insn_t *x86inst;
+	x86_insn_t *prevx86inst;
 
 	inst = CAST2_INST(instnode->node);
 
@@ -85,11 +85,11 @@ void funcid_of_inst(re_list_t* instnode){
 		goto adjust_boundary;
 	}
 
-	//find the last instruction 
+	//find the last instruction
 	list_for_each_entry(entry, &re_ds.head.list, list){
 		if(entry->node_type != InstNode)
-			continue; 
-		
+			continue;
+
 		previnst = CAST2_INST(entry->node);
 		break;
 	}
@@ -97,9 +97,9 @@ void funcid_of_inst(re_list_t* instnode){
 	x86inst = &re_ds.instlist[inst->inst_index];
 	prevx86inst = &re_ds.instlist[previnst->inst_index];
 
-	//determine the function id based on the instruction type	
+	//determine the function id based on the instruction type
 	switch(x86inst->type){
-		//if this is return, as we are looking at the trace reversely, 
+		//if this is return, as we are looking at the trace reversely,
 		//then a new function start
 		case insn_return:
 			inst->funcid = maxfuncid() + 1;
@@ -108,14 +108,14 @@ void funcid_of_inst(re_list_t* instnode){
 
 			previnstnode = lookfor_inst_nexttocall(instnode);
 			if(!previnstnode){
-				inst->funcid = maxfuncid() + 1;		
+				inst->funcid = maxfuncid() + 1;
 				print_instnode(inst);
 				//assert(0);
 				break;
 			}
 
 			previnst = CAST2_INST(lookfor_inst_nexttocall(instnode)->node);
-			inst->funcid = previnst->funcid;	
+			inst->funcid = previnst->funcid;
 			break;
 		case insn_callcc:
 			assert(0);
@@ -139,7 +139,7 @@ adjust_boundary:
 static int adjust_val_offset(re_list_t* entry, int type){
 
 	int regid;
-//use node 
+//use node
 	if(entry->node_type == UseNode){
 
 		if(CAST2_USE(entry->node)->usetype == Opd && CAST2_USE(entry->node)->operand->type == op_register)
@@ -150,7 +150,7 @@ static int adjust_val_offset(re_list_t* entry, int type){
 			if(CAST2_USE(entry->node)->usetype == Index)
 				regid = CAST2_USE(entry->node)->operand->data.expression.index.id;
 	}
-	
+
 	if(entry->node_type == DefNode){
 		if(CAST2_DEF(entry->node)->operand->type  == op_register)
 				regid = CAST2_DEF(entry->node)->operand->data.reg.id;
@@ -158,36 +158,36 @@ static int adjust_val_offset(re_list_t* entry, int type){
 
 
 	if(type == SUB && (regid == get_ah_id() || regid == get_bh_id() || regid == get_ch_id() || regid == get_dh_id()))
-		return 1; 
+		return 1;
 
 	return 0;
 }
 
 
 
-//get the value for a new use whose address is known 
+//get the value for a new use whose address is known
 //the use must be an expression
 //if the use is a register, assignment to it will occur in add_new_use
 static bool assign_use_mem_val(re_list_t* exp, valset_u * rv, re_list_t* uselist){
 
 //basic logic
-//get the value for the use byte by byte 
+//get the value for the use byte by byte
 //for each byte, there are four different ways
-//1. Check next def  
+//1. Check next def
 //2. Check next use
 //3. Check prev def
 //4. Check prev use
 //attention, must take care of the unknown memory write between any memory accesses
 
-	int dtype; 
+	int dtype;
 	size_t memsize;
-	unsigned index;  
-	valset_u tv; 
+	unsigned index;
+	valset_u tv;
 	unsigned oriaddr;
-	x86_op_t tmpopd; 
-	x86_op_t *oriopd;	
+	x86_op_t tmpopd;
+	x86_op_t *oriopd;
 	use_node_t* use;
-	re_list_t *nextdef, *nextuse, *prevdef, *prevuse; 
+	re_list_t *nextdef, *nextuse, *prevdef, *prevuse;
 
 	assert(exp->node_type == UseNode);
 
@@ -195,93 +195,93 @@ static bool assign_use_mem_val(re_list_t* exp, valset_u * rv, re_list_t* uselist
 	memsize = translate_datatype_to_byte(use->operand->datatype);
 	oriaddr = use->address;
 
-	oriopd = use->operand; 
-	memcpy(&tmpopd, use->operand, sizeof(x86_op_t));		
+	oriopd = use->operand;
+	memcpy(&tmpopd, use->operand, sizeof(x86_op_t));
 
-//process the destination byte by byte; 
+//process the destination byte by byte;
 	for(index = 0; index < memsize; index++){
 
 ////////very important here!
 		re_ds.alias_offset = index;
-//////// 
+////////
 
 
 //get the next define for one byte and restore the contexts
-		use->operand = &tmpopd; 
-		use->address = oriaddr + index; 
-		use->operand->datatype = op_byte; 
+		use->operand = &tmpopd;
+		use->address = oriaddr + index;
+		use->operand->datatype = op_byte;
 		nextdef = find_next_def_of_use(exp, &dtype);
-		use->address = oriaddr; 
-		use->operand = oriopd; 
+		use->address = oriaddr;
+		use->operand = oriopd;
 
 	// the base for alias check is the exp
-	// so the address offset for check is the index here		
+	// so the address offset for check is the index here
 
 		if(nextdef && !(CAST2_DEF(nextdef->node)->val_stat & BeforeKnown))
 			goto nextuse;
 
 		if(obstacle_between_two_targets(&re_ds.head, nextdef, exp))
-			goto nextuse;  
+			goto nextuse;
 
 		//get one byte from core dump
 		if(!nextdef){
 
 			//get one byte for the current address
-			
-			use->operand = &tmpopd; 
-			use->address = oriaddr + index; 
-			use->operand->datatype = op_byte; 
-						
+
+			use->operand = &tmpopd;
+			use->address = oriaddr + index;
+			use->operand->datatype = op_byte;
+
 			if (get_value_from_coredump(exp, &tv) == BAD_ADDRESS) {
-				use->address = oriaddr; 
+				use->address = oriaddr;
 				use->operand = oriopd;
 				assert_address();
 			}
 
-			//assign the byte to the corrsponding location 
+			//assign the byte to the corrsponding location
 			memcpy(((void*)rv) + index, &tv.byte, 1);
-			use->address = oriaddr; 
+			use->address = oriaddr;
 			use->operand = oriopd;
-			
+
 			//one byte has been resolved; continue with the next byte
-			continue; 
+			continue;
 		}
 
 //get the value for the current byte from the next define
-		
-		if(true){	
+
+		if(true){
 //take care of the address difference between the next define and the target
-			int offset = index + oriaddr - CAST2_DEF(nextdef->node)->address; 
-			void * copyaddr = ((void*)&CAST2_DEF(nextdef->node)->beforeval) + offset; 
+			int offset = index + oriaddr - CAST2_DEF(nextdef->node)->address;
+			void * copyaddr = ((void*)&CAST2_DEF(nextdef->node)->beforeval) + offset;
 			memcpy(((void*)rv) + index, copyaddr, 1);
 			continue;
 		}
 
-nextuse:				
+nextuse:
 		re_ds.alias_offset = index;
 
-		use->operand = &tmpopd; 
-		
-		use->address = oriaddr + index; 
-		use->operand->datatype = op_byte; 
+		use->operand = &tmpopd;
+
+		use->address = oriaddr + index;
+		use->operand->datatype = op_byte;
 		nextuse = find_next_use_of_use(exp, &dtype);
-		use->address = oriaddr; 
-		use->operand = oriopd; 
+		use->address = oriaddr;
+		use->operand = oriopd;
 
 		if(!nextuse)
 			goto prevdef;
 
 		if(nextdef && node1_add_before_node2(nextuse, nextdef))
-			goto prevdef; 
-			
+			goto prevdef;
+
 		if(!CAST2_USE(nextuse->node)->val_known)
-			goto prevdef; 
+			goto prevdef;
 
 		if(obstacle_between_two_targets(&re_ds.head, nextuse, exp))
-			goto prevdef;  
+			goto prevdef;
 
 		if(true){
-			int offset = index + oriaddr - CAST2_USE(nextuse->node)->address;	
+			int offset = index + oriaddr - CAST2_USE(nextuse->node)->address;
                         void * copyaddr = ((void*)&CAST2_USE(nextuse->node)->val) + offset;
                         memcpy(((void*)rv) + index, copyaddr, 1);
 			continue;
@@ -290,42 +290,42 @@ nextuse:
 //is this really necessary?
 prevdef:
 	//now the previous define or use is the base for alias check
-	//as we only get one byte, no need to add any offset for alias  
+	//as we only get one byte, no need to add any offset for alias
 		re_ds.alias_offset = 0;
-		
-		use->operand = &tmpopd; 
-		use->address = oriaddr + index; 
-		use->operand->datatype = op_byte; 
+
+		use->operand = &tmpopd;
+		use->address = oriaddr + index;
+		use->operand->datatype = op_byte;
 		prevdef = find_prev_def_of_use(exp, &dtype);
-		use->address = oriaddr; 
-		use->operand = oriopd; 
+		use->address = oriaddr;
+		use->operand = oriopd;
 
 		//there is no previous define; then try to find the previous use
 		if(!prevdef)
-			goto prevuse; 
+			goto prevuse;
 
 		if(!(CAST2_DEF(prevdef->node)->val_stat & AfterKnown))
-			goto prevuse; 	
+			goto prevuse;
 
 		if(obstacle_between_two_targets(&re_ds.head,exp, prevdef))
-			goto prevuse;  
+			goto prevuse;
 
 		if(true){
 			int offset = index + oriaddr - CAST2_DEF(prevdef->node)->address;
-			void * copyaddr = ((void*)&CAST2_DEF(prevdef->node)->afterval) + offset; 
+			void * copyaddr = ((void*)&CAST2_DEF(prevdef->node)->afterval) + offset;
 			memcpy(((void*)rv) + index, copyaddr, 1);
 			continue;
 		}
 
-prevuse:		
+prevuse:
 		re_ds.alias_offset = 0;
-		
-		use->operand = &tmpopd; 
-		use->address = oriaddr + index; 
-		use->operand->datatype = op_byte; 
+
+		use->operand = &tmpopd;
+		use->address = oriaddr + index;
+		use->operand->datatype = op_byte;
 		prevuse = find_prev_use_of_use(exp, &dtype);
-		use->address = oriaddr; 
-		use->operand = oriopd; 
+		use->address = oriaddr;
+		use->operand = oriopd;
 
 
 		if(!prevuse)
@@ -333,12 +333,12 @@ prevuse:
 
 		if(prevdef && node1_add_before_node2(prevdef, prevuse))
 			goto out;
-		 
+
 		if(!CAST2_USE(prevuse->node)->val_known)
-			goto out; 	
-		
+			goto out;
+
 		if(obstacle_between_two_targets(&re_ds.head, exp, prevuse))
-			goto out;  
+			goto out;
 
 		if(true){
 			int offset = index + oriaddr - CAST2_USE(prevuse->node)->address;
@@ -347,25 +347,25 @@ prevuse:
 			continue;
                 }
 out:
-		return false; 
+		return false;
 	}
 
 	re_ds.alias_offset = 0;
-	return true; 
+	return true;
 }
 
 
 static bool assign_def_before_mem_val(re_list_t* exp, valset_u * rv, re_list_t* uselist){
 
-	int dtype; 
+	int dtype;
 	size_t memsize;
-	unsigned index;  
-	valset_u tv; 
+	unsigned index;
+	valset_u tv;
 	unsigned oriaddr;
-	x86_op_t tmpopd; 
-	x86_op_t *oriopd;	
+	x86_op_t tmpopd;
+	x86_op_t *oriopd;
 	def_node_t* def;
-	re_list_t *nextdef, *nextuse, *prevdef, *prevuse; 
+	re_list_t *nextdef, *nextuse, *prevdef, *prevuse;
 
 	assert(exp->node_type == DefNode);
 
@@ -373,61 +373,61 @@ static bool assign_def_before_mem_val(re_list_t* exp, valset_u * rv, re_list_t* 
 	memsize = translate_datatype_to_byte(def->operand->datatype);
 	oriaddr = def->address;
 
-	oriopd = def->operand; 
-	memcpy(&tmpopd, def->operand, sizeof(x86_op_t));		
-	def->operand = &tmpopd; 
+	oriopd = def->operand;
+	memcpy(&tmpopd, def->operand, sizeof(x86_op_t));
+	def->operand = &tmpopd;
 
-//process the destination byte by byte; 
+//process the destination byte by byte;
 	for(index = 0; index < memsize; index++){
 
 ////////very important here!
 		re_ds.alias_offset = 0;
-//////// 
-		def->operand = &tmpopd; 
-		def->address = oriaddr + index; 
-		def->operand->datatype = op_byte; 
+////////
+		def->operand = &tmpopd;
+		def->address = oriaddr + index;
+		def->operand->datatype = op_byte;
 		prevdef = find_prev_def_of_def(exp, &dtype);
-		def->address = oriaddr; 
-		def->operand = oriopd; 
+		def->address = oriaddr;
+		def->operand = oriopd;
 
 		if(!prevdef)
-			goto prevuse; 
+			goto prevuse;
 
 		if(!(CAST2_DEF(prevdef->node)->val_stat & AfterKnown))
 			goto prevuse;
 
 		if(obstacle_between_two_targets(&re_ds.head, exp, prevdef))
-			goto prevuse;  
+			goto prevuse;
 
 		if(true){
 			int offset = index + oriaddr - CAST2_DEF(prevdef->node)->address;
-			void * copyaddr = ((void*)&CAST2_DEF(prevdef->node)->afterval) + offset; 
+			void * copyaddr = ((void*)&CAST2_DEF(prevdef->node)->afterval) + offset;
 			memcpy(((void*)rv) + index, copyaddr, 1);
 			continue;
 		}
 
-prevuse:		
+prevuse:
 
 		re_ds.alias_offset = 0;
 
-		def->operand = &tmpopd; 
-		def->address = oriaddr + index; 
-		def->operand->datatype = op_byte; 
+		def->operand = &tmpopd;
+		def->address = oriaddr + index;
+		def->operand->datatype = op_byte;
 		prevuse = find_prev_use_of_def(exp, &dtype);
-		def->address = oriaddr; 
-		def->operand = oriopd; 
+		def->address = oriaddr;
+		def->operand = oriopd;
 
 		if(!prevuse)
 			goto out;
 
 		if(prevdef && node1_add_before_node2(prevdef, prevuse))
-			goto out; 
+			goto out;
 
 		if(!CAST2_USE(prevuse->node)->val_known)
-			goto out; 
+			goto out;
 
 		if(obstacle_between_two_targets(&re_ds.head, exp, prevuse))
-			goto out;  
+			goto out;
 
 		if(true){
 			int offset = index + oriaddr - CAST2_USE(prevuse->node)->address;
@@ -436,24 +436,24 @@ prevuse:
 			continue;
                 }
 out:
-		return false; 
+		return false;
 	}
 
 	re_ds.alias_offset = 0;
-	return true; 
+	return true;
 }
 
 static bool assign_def_after_mem_val(re_list_t* exp, valset_u * rv, re_list_t* uselist){
 
-	int dtype; 
+	int dtype;
 	size_t memsize;
-	unsigned index;  
-	valset_u tv; 
+	unsigned index;
+	valset_u tv;
 	unsigned oriaddr;
-	x86_op_t tmpopd; 
-	x86_op_t *oriopd;	
+	x86_op_t tmpopd;
+	x86_op_t *oriopd;
 	def_node_t* def;
-	re_list_t *nextdef, *nextuse, *prevdef, *prevuse; 
+	re_list_t *nextdef, *nextuse, *prevdef, *prevuse;
 
 	assert(exp->node_type == DefNode);
 
@@ -461,107 +461,107 @@ static bool assign_def_after_mem_val(re_list_t* exp, valset_u * rv, re_list_t* u
 	memsize = translate_datatype_to_byte(def->operand->datatype);
 	oriaddr = def->address;
 
-	oriopd = def->operand; 
-	memcpy(&tmpopd, def->operand, sizeof(x86_op_t));		
-	def->operand = &tmpopd; 
+	oriopd = def->operand;
+	memcpy(&tmpopd, def->operand, sizeof(x86_op_t));
+	def->operand = &tmpopd;
 
-//process the destination byte by byte; 
+//process the destination byte by byte;
 	for(index = 0; index < memsize; index++){
 
 ////////very important here!
 		re_ds.alias_offset = index;
-//////// 
-		def->operand = &tmpopd; 
+////////
+		def->operand = &tmpopd;
 
-		def->address = oriaddr + index; 
-		def->operand->datatype = op_byte; 
+		def->address = oriaddr + index;
+		def->operand->datatype = op_byte;
 		nextdef = find_next_def_of_def(exp, &dtype);
-		def->address = oriaddr; 
-		def->operand = oriopd; 
-	
+		def->address = oriaddr;
+		def->operand = oriopd;
+
 
 		if(nextdef && !(CAST2_DEF(nextdef->node)->val_stat & BeforeKnown))				goto nextuse;
 
-	
+
 		if(obstacle_between_two_targets(&re_ds.head, nextdef, exp))
-			goto nextuse;  
+			goto nextuse;
 
 		//get one byte from core dump
 		if(!nextdef){
 
-			def->operand = &tmpopd; 
-			def->address = oriaddr + index; 
-			def->operand->datatype = op_byte; 
-						
+			def->operand = &tmpopd;
+			def->address = oriaddr + index;
+			def->operand->datatype = op_byte;
+
 			if (get_value_from_coredump(exp, &tv) == BAD_ADDRESS) {
-				def->address = oriaddr; 
+				def->address = oriaddr;
 				def->operand = oriopd;
 				assert_address();
 			}
 
 			memcpy(((void*)rv) + index,&tv.byte, 1);
-			def->address = oriaddr; 
+			def->address = oriaddr;
 			def->operand = oriopd;
 
-			continue; 
+			continue;
 		}
 
 		if(true){
-			int offset = index + oriaddr - CAST2_DEF(nextdef->node)->address; 
-			void * copyaddr = ((void*)&CAST2_DEF(nextdef->node)->beforeval) + offset; 
+			int offset = index + oriaddr - CAST2_DEF(nextdef->node)->address;
+			void * copyaddr = ((void*)&CAST2_DEF(nextdef->node)->beforeval) + offset;
 			memcpy(((void*)rv) + index, copyaddr, 1);
 			continue;
 		}
 
-nextuse:	
+nextuse:
 		re_ds.alias_offset = index;
-			
-		def->operand = &tmpopd; 
-		def->address = oriaddr + index; 
-		def->operand->datatype = op_byte; 
+
+		def->operand = &tmpopd;
+		def->address = oriaddr + index;
+		def->operand->datatype = op_byte;
 		nextuse = find_next_use_of_def(exp, &dtype);
-		def->address = oriaddr; 
-		def->operand = oriopd; 
+		def->address = oriaddr;
+		def->operand = oriopd;
 
 		if(!nextuse)
 			goto out;
-		
+
 		if(nextdef && node1_add_before_node2(nextuse, nextdef))
-			goto out; 
+			goto out;
 
 		if(!CAST2_USE(nextuse->node)->val_known)
-			goto out; 	
-		
+			goto out;
+
 		if(obstacle_between_two_targets(&re_ds.head, nextuse, exp))
-			goto out;  
-		
+			goto out;
+
 		if(true){
-			int offset = index + oriaddr - CAST2_USE(nextuse->node)->address;	
+			int offset = index + oriaddr - CAST2_USE(nextuse->node)->address;
                         void * copyaddr = ((void*)&CAST2_USE(nextuse->node)->val) + offset;
                         memcpy(((void*)rv) + index, copyaddr, 1);
 			continue;
                 }
 out:
-		return false; 
+		return false;
 	}
 
 	re_ds.alias_offset = 0;
-	return true; 
+	return true;
 }
 
 
 bool assign_mem_val(re_list_t* exp, valset_u * rv, re_list_t* uselist){
-	
+
 	if(exp->node_type == UseNode)
 		return assign_use_mem_val(exp, rv, uselist);
 
-	return false; 
+	return false;
 }
 
 //get the size of operand pointed to by a node
 size_t size_of_node(re_list_t* node){
 
-	use_node_t* use; 
+	use_node_t* use;
 	def_node_t* def;
 
 	if(node->node_type == UseNode){
@@ -575,41 +575,41 @@ size_t size_of_node(re_list_t* node){
 				}
 
 				if(use->operand->type == op_register){
-					return use->operand->data.reg.size; 
+					return use->operand->data.reg.size;
 				}
 
 				if(use->operand->type == op_immediate){
 					return translate_datatype_to_byte(use->operand->datatype);
 				}
 				//in fact, there is a problem here
-				//cause for some instructions, such as rep movz, the size of destination is unknown 
+				//cause for some instructions, such as rep movz, the size of destination is unknown
 				assert("FUck you here" && 0);
 
 			case Base:
-				return use->operand->data.expression.base.size;	
+				return use->operand->data.expression.base.size;
 
-			case Index: 
+			case Index:
 				return use->operand->data.expression.index.size;
-			default: 
-				assert("Wrong use tyep" &&  0);	
+			default:
+				assert("Wrong use tyep" &&  0);
 		}
 	}
 
 	if(node->node_type == DefNode){
 
 		def = CAST2_DEF(node->node);
-			
+
 		if(def->operand->type == op_expression){
 			return translate_datatype_to_byte(def->operand->datatype);
 		}
 
 		if(def->operand->type == op_register){
-			return def->operand->data.reg.size; 
+			return def->operand->data.reg.size;
 		}
 	}
 
 	assert("You can only get size of use node or def node" && 0);
-	return 0; 
+	return 0;
 }
 
 
@@ -620,27 +620,27 @@ re_list_t * add_new_use(x86_op_t * opd, enum u_type type){
 
 	re_list_t * newnode;
 	re_list_t * nextdef;
-	use_node_t * newuse; 
+	use_node_t * newuse;
 	int alias_type;
 
 	newnode = (re_list_t *)malloc(sizeof(re_list_t ));
 	if(!newnode){
-		return NULL; 
+		return NULL;
 	}
 
-	newnode->id = re_ds.current_id; 
-	re_ds.current_id++;	
+	newnode->id = re_ds.current_id;
+	re_ds.current_id++;
 
-	newuse = (use_node_t*)malloc(sizeof(use_node_t));	
+	newuse = (use_node_t*)malloc(sizeof(use_node_t));
 	if(!newuse){
 		free(newnode);
 		return NULL;
 	}
 
 	memset(newuse, 0, sizeof(use_node_t));
-	
+
 	newuse->usetype = type;
-	newuse->operand = opd; 
+	newuse->operand = opd;
 	newnode->node_type = UseNode;
 	newnode->node = (void*)newuse;
 
@@ -652,11 +652,11 @@ re_list_t * add_new_use(x86_op_t * opd, enum u_type type){
 	//insert new node into main list
 	list_add(&newnode->list, &re_ds.head.list);
 
-	//the use is an immediate value; 
+	//the use is an immediate value;
 	if(opd->type == op_immediate){
 		get_immediate_from_opd(opd, &newuse->val);
 		newuse->val_known = true;
-		goto solve; 
+		goto solve;
 	}
 
 	//check the next define
@@ -685,9 +685,9 @@ solve:
 #ifdef WITH_SOLVER
 	CAST2_USE(newnode->node)->addresscst = NULL;
 	CAST2_USE(newnode->node)->constant = false;
-	adjust_use_constraint(newnode); 
+	adjust_use_constraint(newnode);
 #endif
-	return newnode; 
+	return newnode;
 }
 
 
@@ -695,25 +695,25 @@ re_list_t * add_new_define(x86_op_t * opd){
 
 	re_list_t * newnode;
 	re_list_t * nextdef;
-	def_node_t * newdef; 
+	def_node_t * newdef;
 	int type;
 
 	newnode = (re_list_t *)malloc(sizeof(re_list_t ));
 	if(!newnode){
-		return NULL; 
+		return NULL;
 	}
 
-	newnode->id = re_ds.current_id; 
-	re_ds.current_id++;	
+	newnode->id = re_ds.current_id;
+	re_ds.current_id++;
 
-	newdef = (def_node_t*)malloc(sizeof(def_node_t));	
+	newdef = (def_node_t*)malloc(sizeof(def_node_t));
 	if(!newdef){
 		free(newnode);
 		return NULL;
 	}
 
 	memset(newdef, 0, sizeof(def_node_t));
-	newdef->operand = opd; 
+	newdef->operand = opd;
 	newnode->node_type = DefNode;
 	newnode->node = (void*)newdef;
 
@@ -736,48 +736,48 @@ re_list_t * add_new_define(x86_op_t * opd){
 			if (get_value_from_coredump(newnode, &newdef->afterval) == BAD_ADDRESS) {
 				assert_address();
 			}
-			newdef->val_stat |= AfterKnown; 
-		} 
+			newdef->val_stat |= AfterKnown;
+		}
 	}
 	else{
-		if((type == EXACT || type == SUPER) &&	
+		if((type == EXACT || type == SUPER) &&
 			CAST2_DEF(nextdef->node)->val_stat & BeforeKnown){
 				assign_def_after_value(newnode, CAST2_DEF(nextdef->node)->beforeval);
 		}
 	}
 
 #ifdef WITH_SOLVER
-	CAST2_DEF(newnode->node)->addresscst = NULL;	
-	CAST2_DEF(newnode->node)->beforeconst = false;	
-	CAST2_DEF(newnode->node)->afterconst = false;	
-	adjust_def_constraint(newnode);		
+	CAST2_DEF(newnode->node)->addresscst = NULL;
+	CAST2_DEF(newnode->node)->beforeconst = false;
+	CAST2_DEF(newnode->node)->afterconst = false;
+	adjust_def_constraint(newnode);
 #endif
 
-	return newnode; 
+	return newnode;
 }
 
 re_list_t * add_new_inst(unsigned index){
 
-	re_list_t * newnode; 
-	inst_node_t * newinst;  
+	re_list_t * newnode;
+	inst_node_t * newinst;
 
 	newnode = (re_list_t *)malloc(sizeof(re_list_t ));
 
 	if(!newnode){
-		return NULL; 
+		return NULL;
 	}
-	
-	newnode->id = re_ds.current_id; 
-	re_ds.current_id++;	
 
-	newinst = (inst_node_t*)malloc(sizeof(inst_node_t));	
+	newnode->id = re_ds.current_id;
+	re_ds.current_id++;
+
+	newinst = (inst_node_t*)malloc(sizeof(inst_node_t));
 
 	if(!newinst){
 		free(newnode);
 		return NULL;
 	}
 
-	newinst->inst_index = index; 
+	newinst->inst_index = index;
 
 #ifdef WITH_SOLVER
 	newinst->constraint = NULL;
@@ -795,18 +795,16 @@ re_list_t * add_new_inst(unsigned index){
 
 void assign_def_before_value(re_list_t * def, valset_u val){
 
-	memcpy( &(CAST2_DEF(def->node)->beforeval), 
-		&val, sizeof(val));   
-	
-	CAST2_DEF(def->node)->val_stat |= BeforeKnown;  
+	memcpy( &(CAST2_DEF(def->node)->beforeval),
+		&val, sizeof(val));
 
-#ifdef DATA_LOGGED
+	CAST2_DEF(def->node)->val_stat |= BeforeKnown;
+
 	//check the resolved values against the ground truth log
 	//to aid the debugging process
 	//do not perform correctness check when verifying alias
-		if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-			correctness_check(find_inst_of_node(def));	
-#endif
+        if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
+	        correctness_check(find_inst_of_node(def));
 
 }
 
@@ -815,18 +813,16 @@ void assign_def_after_value(re_list_t * def, valset_u val){
 	if(!re_ds.rec_count && def->id == 65335)
 		printf("Interesting here 2\n");
 
-	memcpy(&(CAST2_DEF(def->node)->afterval), 
-		&val, sizeof(val));   
+	memcpy(&(CAST2_DEF(def->node)->afterval),
+		&val, sizeof(val));
 
-	CAST2_DEF(def->node)->val_stat |= AfterKnown;  
+	CAST2_DEF(def->node)->val_stat |= AfterKnown;
 
-#ifdef DATA_LOGGED
 	//check the resolved values against the ground truth log
 	//to aid the debugging process
 	//do not perform correctness check when verifying alias
-		if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-			correctness_check(find_inst_of_node(def));	
-#endif
+	if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
+		correctness_check(find_inst_of_node(def));
 }
 
 void assign_use_value(re_list_t *use, valset_u val) {
@@ -837,19 +833,17 @@ void assign_use_value(re_list_t *use, valset_u val) {
 		printf("reached interesting point\n");
 //		assert(0);
 	}
-	
-	memcpy( &(CAST2_USE(use->node)->val), 
-		&val, sizeof(val));   
 
-	CAST2_USE(use->node)->val_known = true;  
+	memcpy( &(CAST2_USE(use->node)->val),
+		&val, sizeof(val));
 
-#ifdef DATA_LOGGED
+	CAST2_USE(use->node)->val_known = true;
+
 	//check the resolved values against the ground truth log
 	//to aid the debugging process
 	//do not perform correctness check when verifying alias
-		if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-			correctness_check(find_inst_of_node(use));	
-#endif
+	if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
+		correctness_check(find_inst_of_node(use));
 }
 
 //search for the use corresponding before a specific define
@@ -861,11 +855,11 @@ static void def_before_pollute_use(re_list_t *def, re_list_t *re_instlist){
 
 	list_for_each_entry_reverse(node, &def->list, list) {
 		//reached the end
-		if (node == &re_ds.head) 
+		if (node == &re_ds.head)
 			break;
 
-		//it is an inst 
-		if (node->node_type == InstNode) 
+		//it is an inst
+		if (node->node_type == InstNode)
 			continue;
 
 		//encounter a redefine or a define with unknown address
@@ -879,12 +873,12 @@ static void def_before_pollute_use(re_list_t *def, re_list_t *re_instlist){
 		}
 
 		//if it is a use, then check if it has same ID with the define
-		if (node->node_type == UseNode){ 
+		if (node->node_type == UseNode){
 
 			type = compare_two_targets(def, node);
 
 			//yes
-			if((type == EXACT || type == SUPER)){ 
+			if((type == EXACT || type == SUPER)){
 				//the use has unknown value, then pollute the define
 				if(!CAST2_USE(node->node)->val_known){
 					assign_use_value(node, CAST2_DEF(def->node)->beforeval);
@@ -913,11 +907,11 @@ static void def_after_pollute_use(re_list_t *def, re_list_t *re_instlist){
 
 	list_for_each_entry(node, &def->list, list) {
 		//reached the end
-		if (node == &re_ds.head) 
+		if (node == &re_ds.head)
 			break;
 
-		//it is an inst 
-		if (node->node_type == InstNode) 
+		//it is an inst
+		if (node->node_type == InstNode)
 			continue;
 
 		//encounter a redefine or a define with unknown address
@@ -930,12 +924,12 @@ static void def_after_pollute_use(re_list_t *def, re_list_t *re_instlist){
 		}
 
 		//if it is a use, then check if it has same ID with the define
-		if (node->node_type == UseNode){ 
+		if (node->node_type == UseNode){
 
 			type = compare_two_targets(def, node);
 
 			//yes
-			if((type == EXACT || type == SUPER)){ 
+			if((type == EXACT || type == SUPER)){
 				//the use has unknown value, then pollute the define
 				if(!CAST2_USE(node->node)->val_known){
 					assign_use_value(node, CAST2_DEF(def->node)->afterval);
@@ -960,7 +954,7 @@ static void def_after_pollute_use(re_list_t *def, re_list_t *re_instlist){
 
 int compare_def_def(re_list_t *first, re_list_t *second) {
 	def_node_t *firstd = (def_node_t*) first->node;
-	def_node_t *secondd = (def_node_t*) second->node;	
+	def_node_t *secondd = (def_node_t*) second->node;
 
 	if(firstd->operand->type != secondd->operand->type) {
 		return 0;
@@ -970,13 +964,13 @@ int compare_def_def(re_list_t *first, re_list_t *second) {
 		if (exact_same_regs(firstd->operand->data.reg, secondd->operand->data.reg)) {
 			return EXACT;
 		}
-		
+
 		if (reg1_alias_reg2(firstd->operand->data.reg, secondd->operand->data.reg)) {
-			return SUB; 
+			return SUB;
 		}
 
 		if (reg1_alias_reg2(secondd->operand->data.reg, firstd->operand->data.reg)) {
-			return SUPER; 
+			return SUPER;
 		}
 
 		if (same_alias(firstd->operand->data.reg, secondd->operand->data.reg)) {
@@ -994,7 +988,7 @@ int compare_def_def(re_list_t *first, re_list_t *second) {
 	}
 
 	if(firstd->operand->type == op_expression){
-		if(firstd->address == 0 || secondd->address == 0){			
+		if(firstd->address == 0 || secondd->address == 0){
 			return 0;
 		}
 
@@ -1013,7 +1007,7 @@ int compare_def_def(re_list_t *first, re_list_t *second) {
 		     overlap_mem(secondd->address, size2, firstd->address, size1) ) {
 			return OVERLAP;
 		}
-		
+
 	}
 	if (firstd->operand->type == op_offset) {
 		if (op_with_gs_seg(firstd->operand) && op_with_gs_seg(secondd->operand)) {
@@ -1025,12 +1019,12 @@ int compare_def_def(re_list_t *first, re_list_t *second) {
 		}
 		assert(0);
 	}
-	return 0;		
+	return 0;
 }
 
 int compare_def_use(re_list_t *first, re_list_t *second) {
 	def_node_t *firstd = (def_node_t *)first->node;
-	use_node_t *secondu = (use_node_t*)second->node; 
+	use_node_t *secondu = (use_node_t*)second->node;
 
 	size_t size1, size2;
 
@@ -1050,10 +1044,10 @@ int compare_def_use(re_list_t *first, re_list_t *second) {
 				}
 
 				if (reg1_alias_reg2(firstd->operand->data.reg, secondu->operand->data.reg)) {
-					return SUB; 
+					return SUB;
 				}
 				if (reg1_alias_reg2(secondu->operand->data.reg, firstd->operand->data.reg)) {
-					return SUPER; 
+					return SUPER;
 				}
 				if (same_alias(firstd->operand->data.reg, secondu->operand->data.reg)) {
 
@@ -1065,13 +1059,13 @@ int compare_def_use(re_list_t *first, re_list_t *second) {
 						return SUPER;
 					}
 
-					return SUB;					
+					return SUB;
 				}
 			}
 
 			if(firstd->operand->type == op_expression){
 
-				if(firstd->address == 0 || secondu->address == 0)	
+				if(firstd->address == 0 || secondu->address == 0)
 					return 0;
 				if exact_same_mem(firstd->address, size1, secondu->address, size2) {
 					return EXACT;
@@ -1087,7 +1081,7 @@ int compare_def_use(re_list_t *first, re_list_t *second) {
 					return OVERLAP;
 				}
 
-			}	
+			}
 			if (firstd->operand->type == op_offset) {
 				if (op_with_gs_seg(firstd->operand) && op_with_gs_seg(secondu->operand)) {
 					if (firstd->operand->data.offset != secondu->operand->data.offset) {
@@ -1116,7 +1110,7 @@ int compare_def_use(re_list_t *first, re_list_t *second) {
 			break;
 
 		case Index:
-			
+
 			if(firstd->operand->type != op_register)
 				return 0;
 
@@ -1130,23 +1124,23 @@ int compare_def_use(re_list_t *first, re_list_t *second) {
 			break;
 
 		default:
-			
+
 			break;
-	}	
+	}
 	return 0;
 }
 
 
 int compare_use_use(re_list_t *first, re_list_t *second) {
-		
+
 	use_node_t *firstu, *secondu;
-	int type1, type2; 
-	unsigned addr1, addr2, offset1, offset2; 
+	int type1, type2;
+	unsigned addr1, addr2, offset1, offset2;
 	size_t size1, size2;
-	x86_reg_t *reg1, *reg2; 
+	x86_reg_t *reg1, *reg2;
 
 	firstu = (use_node_t *)first->node;
-	secondu = (use_node_t*)second->node; 
+	secondu = (use_node_t*)second->node;
 	reg1 = NULL;
 	reg2 = NULL;
 
@@ -1154,92 +1148,92 @@ int compare_use_use(re_list_t *first, re_list_t *second) {
 //use is an opd, then it could be anything
 //use it as it is
 	if(firstu->usetype == Opd){
-				
+
 		switch(firstu->operand->type){
-			
+
 			case op_expression:
-				type1 = 0; 
+				type1 = 0;
 				addr1 = firstu->address;
 				size1 = translate_datatype_to_byte(firstu->operand->datatype);
 				break;
 
 			case op_register:
-				type1 = 1; 
+				type1 = 1;
 				reg1 = &firstu->operand->data.reg;
 				break;
-				
+
 			case op_offset:
-					
+
 				if(op_with_gs_seg(firstu->operand)){
-					type1 = 2; 
-					offset1 = firstu->operand->data.offset; 
+					type1 = 2;
+					offset1 = firstu->operand->data.offset;
 				}
 				else
 					type1 = 3;
 
 				break;
 
-			case op_immediate: 
+			case op_immediate:
 				return 0;
 
-			default: 
-				assert(0);	
-		}		
+			default:
+				assert(0);
+		}
 	}
-	
+
 	if(firstu->usetype == Base){
-		type1 = 1; 
+		type1 = 1;
 		reg1 = &firstu->operand->data.expression.base;
 	}
 
 	if(firstu->usetype == Index){
-		type1 = 1; 
+		type1 = 1;
 		reg1 = &firstu->operand->data.expression.index;
 	}
 
 
 	if(secondu->usetype == Opd){
-				
+
 		switch(secondu->operand->type){
-			
+
 			case op_expression:
-				type2 = 0; 
+				type2 = 0;
 				addr2 = secondu->address;
 				size2 = translate_datatype_to_byte(secondu->operand->datatype);
 				break;
 
 			case op_register:
-				type2 = 1; 
+				type2 = 1;
 				reg2 = &secondu->operand->data.reg;
 				break;
-				
-			case op_offset: 
+
+			case op_offset:
 				if(op_with_gs_seg(secondu->operand)){
-					type2 = 2; 
-					offset2 =  secondu->operand->data.offset; 
+					type2 = 2;
+					offset2 =  secondu->operand->data.offset;
 				}else
 					type2 = 3;
 				break;
 
-			case op_immediate: 
+			case op_immediate:
 				return 0;
 
-			default: 
-				assert(0);	
+			default:
+				assert(0);
 
-		}		
+		}
 	}
-	
+
 	if(secondu->usetype == Base){
-		type2 = 1; 
+		type2 = 1;
 		reg2 = &secondu->operand->data.expression.base;
 	}
 
 	if(secondu->usetype == Index){
-		type2 = 1; 
+		type2 = 1;
 		reg2 = &secondu->operand->data.expression.index;
 	}
-	
+
 	if(type1 != type2)
 		return 0;
 
@@ -1249,13 +1243,13 @@ int compare_use_use(re_list_t *first, re_list_t *second) {
 			if(!addr1 || !addr2)
 				return 0;
 
-			if exact_same_mem(addr1, size1, addr2, size2) 
+			if exact_same_mem(addr1, size1, addr2, size2)
 				return EXACT;
 
 			if subset_mem(addr1, size1, addr2, size2)
 				return SUB;
 
-			if superset_mem(addr1, size1, addr2, size2)			
+			if superset_mem(addr1, size1, addr2, size2)
 				return SUPER;
 
 			if (overlap_mem(addr1, size1, addr2, size2) || overlap_mem(addr2, size2, addr1, size1) )
@@ -1271,11 +1265,11 @@ int compare_use_use(re_list_t *first, re_list_t *second) {
 			}
 
 			if (reg1_alias_reg2((*reg1), (*reg2))) {
-				return SUB; 
+				return SUB;
 			}
 
 			if (reg1_alias_reg2((*reg2), (*reg1))) {
-				return SUPER; 
+				return SUPER;
 			}
 
 			if (same_alias((*reg1), (*reg2))) {
@@ -1288,7 +1282,7 @@ int compare_use_use(re_list_t *first, re_list_t *second) {
 					return SUPER;
 				}
 
-				return SUB;					
+				return SUB;
 			}
 			break;
 
@@ -1301,33 +1295,33 @@ int compare_use_use(re_list_t *first, re_list_t *second) {
 		default:
 			assert(0);
 	}
-		
+
 	return 0;
 }
 
 
 int compare_two_targets(re_list_t* first, re_list_t * second){
 
-	def_node_t *firstd, *secondd; 
+	def_node_t *firstd, *secondd;
 	use_node_t *firstu, *secondu;
 
-	int type; 
+	int type;
 
 
-	if(first->node_type == DefNode 
+	if(first->node_type == DefNode
 			&& second ->node_type == DefNode){
 		return compare_def_def(first, second);
-	}	
+	}
 
-	if(first->node_type == DefNode 
+	if(first->node_type == DefNode
 			&& second ->node_type == UseNode){
 
 		return compare_def_use(first, second);
-	}	
+	}
 
-	if(first->node_type == UseNode 
+	if(first->node_type == UseNode
 			&& second ->node_type == DefNode){
-		
+
 		type = compare_def_use(second, first);
 
 		switch(type){
@@ -1337,26 +1331,26 @@ int compare_two_targets(re_list_t* first, re_list_t * second){
 
 			case EXACT:
 			case OVERLAP:
-				return type; 
+				return type;
 
-			case SUB: 
+			case SUB:
 				return SUPER;
 
 			case SUPER:
-				return SUB;		
-							
-			default: 
+				return SUB;
+
+			default:
 				assert(0);
 		}
 
 
 
-	}	
+	}
 
-	if(first->node_type == UseNode 
+	if(first->node_type == UseNode
 			&& second ->node_type == UseNode){
 		return compare_use_use(first, second);
-	}	
+	}
 	return 0;
 }
 
@@ -1366,8 +1360,8 @@ bool ok_to_get_value(re_list_t *entry) {
 	use_node_t *usenode = NULL;
 	if (entry->node_type == DefNode) {
 		defnode = CAST2_DEF(entry->node);
-		
-		return (!((defnode->operand->type == op_expression) && 
+
+		return (!((defnode->operand->type == op_expression) &&
 			(defnode->address == 0)));
 	}
 	if (entry->node_type == UseNode) {
@@ -1376,7 +1370,7 @@ bool ok_to_get_value(re_list_t *entry) {
 		if (usenode->usetype != Opd) {
 			return true;
 		}
-		return (!((usenode->operand->type == op_expression) && 
+		return (!((usenode->operand->type == op_expression) &&
 			(usenode->address == 0)));
 	}
 }
@@ -1386,11 +1380,11 @@ re_list_t * find_next_use_of_use(re_list_t* use, int *type){
 	re_list_t *entry;
 
 	list_for_each_entry(entry, &use->list, list) {
-	
+
 		if (entry == &re_ds.head) break;
 		if (entry->node_type != UseNode)
 			continue;
-		
+
 		*type = compare_two_targets(entry, use);
 
 		if (*type) {
@@ -1405,11 +1399,11 @@ re_list_t * find_next_def_of_use(re_list_t* use, int *type){
 	re_list_t *entry;
 
 	list_for_each_entry(entry, &use->list, list) {
-	
+
 		if (entry == &re_ds.head) break;
 		if (entry->node_type != DefNode)
 			continue;
-		
+
 		*type = compare_two_targets(entry, use);
 
 		if (*type) {
@@ -1455,7 +1449,7 @@ re_list_t * find_inst_of_node(re_list_t *node) {
 	re_list_t *entry;
 	list_for_each_entry(entry, &node->list, list) {
 		if (entry == &re_ds.head) break;
-		if (entry->node_type == InstNode) 
+		if (entry->node_type == InstNode)
 			return entry;
 	}
 	return NULL;
@@ -1501,7 +1495,7 @@ void re_resolve(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_inst
 			// only affect deflist one time
 			resolve_use(re_deflist, re_uselist, re_instlist);
 		}
-		
+
 		if (!(list_empty(&re_deflist->deflist))) {
 			// affect deflist and instlist one time
 			resolve_define(re_deflist, re_uselist, re_instlist);
@@ -1517,12 +1511,12 @@ void re_resolve(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_inst
 }
 
 void resolve_heuristics(re_list_t* instnode, re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_instlist){
-	
-	int index; 
-	x86_insn_t * inst; 	
 
-	inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index; 
-	
+	int index;
+	x86_insn_t * inst;
+
+	inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index;
+
 	index = insttype_to_index(inst->type);
 
 	if(index >= 0){
@@ -1534,9 +1528,9 @@ void resolve_use(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_ins
 	int type;
 	re_list_t *entry, *temp;
 	re_list_t *nextdef, *nextuse, *prevdef, *prevuse, *inst;
-	valset_u vt; 
-	int offset; 
-	int valoffset; 
+	valset_u vt;
+	int offset;
+	int valoffset;
 
 
 	list_for_each_entry_safe_reverse(entry, temp, &re_uselist->uselist, uselist){
@@ -1545,9 +1539,9 @@ void resolve_use(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_ins
 #ifdef WITH_SOLVER
 		adjust_use_constraint(entry);
 #endif
-		//deal with lea instruction in particular; 
+		//deal with lea instruction in particular;
 		if(node_is_exp(entry, true) && !ok_to_check_alias(entry))
-			goto out; 
+			goto out;
 
 		if(inst = find_inst_of_node(entry)){
 			if (!check_inst_resolution(inst))
@@ -1566,18 +1560,18 @@ void resolve_use(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_ins
 
 		//no nextdef, goto nextuse
 		if(!nextdef)
-			goto nextuse; 
+			goto nextuse;
 
 		//nextdef has a super size
 		if(type != EXACT && type !=SUB)
 			goto nextuse;
 
-//nextdef is an expression 
+//nextdef is an expression
 //then we need to exclude any possible unknown memory write inbetween
 		if(node_is_exp(entry, true)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the nextdef
 			memsize = translate_datatype_to_byte(CAST2_DEF(nextdef->node)->operand->datatype);
@@ -1585,16 +1579,16 @@ void resolve_use(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_ins
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//in this case, the alias check is based on entry; 
-				//set up the offset for alias check 
-				re_ds.alias_offset = CAST2_DEF(nextdef->node)->address- CAST2_USE(entry->node)->address + index; 
+				//in this case, the alias check is based on entry;
+				//set up the offset for alias check
+				re_ds.alias_offset = CAST2_DEF(nextdef->node)->address- CAST2_USE(entry->node)->address + index;
 
 				if(obstacle_between_two_targets(&re_ds.head, nextdef, entry))
 					goto nextuse;
 			}
 
-			//considering about the offset between two addresses; 
-			offset = CAST2_DEF(nextdef->node)->address - CAST2_USE(entry->node)->address; 
+			//considering about the offset between two addresses;
+			offset = CAST2_DEF(nextdef->node)->address - CAST2_USE(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_USE(entry->node)->val) + offset, sizeof(valset_u) - offset);
 
 		}else{
@@ -1617,19 +1611,19 @@ nextuse:
 		nextuse = find_next_use_of_use(entry, &type);
 
 		if(!nextuse)
-			goto prevdef; 
+			goto prevdef;
 
-		//between the next use, there is a define	
+		//between the next use, there is a define
 		if(nextdef && node1_add_before_node2(nextuse, nextdef))
-			goto prevdef; 
+			goto prevdef;
 
 		if(type != EXACT && type != SUB)
 			goto prevdef;
 
 		if(node_is_exp(entry, true)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_USE(nextuse->node)->operand->datatype);
@@ -1637,15 +1631,15 @@ nextuse:
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset = CAST2_USE(nextuse->node)->address- CAST2_USE(entry->node)->address + index; 
+				//set up the offset for alias check
+				re_ds.alias_offset = CAST2_USE(nextuse->node)->address- CAST2_USE(entry->node)->address + index;
 
 				if(obstacle_between_two_targets(&re_ds.head, nextuse, entry))
 					goto prevdef;
 
 			}
 
-			offset = CAST2_USE(nextuse->node)->address - CAST2_USE(entry->node)->address; 
+			offset = CAST2_USE(nextuse->node)->address - CAST2_USE(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_USE(entry->node)->val) + offset, sizeof(valset_u) - offset);
 
 		}else{
@@ -1662,35 +1656,35 @@ nextuse:
 
 		}else{ assert_val(nextuse, vt,false); }
 
-		//assign to the previous define 
+		//assign to the previous define
 prevdef:
 		prevdef = find_prev_def_of_use(entry, &type);
 
 		if(!prevdef)
-			goto prevuse; 
+			goto prevuse;
 
 		if(type != EXACT && type != SUB)
 			goto prevuse;
 
 		if(node_is_exp(entry, true)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_DEF(prevdef->node)->operand->datatype);
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset = index; 
+				//set up the offset for alias check
+				re_ds.alias_offset = index;
 
-//at this time, the base for alias check is the previous define 
+//at this time, the base for alias check is the previous define
 				if(obstacle_between_two_targets(&re_ds.head, entry, prevdef))
 					goto prevuse;
 			}
 
-			offset = CAST2_DEF(prevdef->node)->address - CAST2_USE(entry->node)->address; 
+			offset = CAST2_DEF(prevdef->node)->address - CAST2_USE(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_USE(entry->node)->val) + offset, sizeof(valset_u) - offset);
 		}else{
 
@@ -1711,32 +1705,32 @@ prevuse:
 		prevuse = find_prev_use_of_use(entry, &type);
 
 		if(!prevuse)
-			goto out; 
+			goto out;
 
 		if(prevdef && node1_add_before_node2(prevdef, prevuse))
-			goto out; 
+			goto out;
 
 		if(type != EXACT && type != SUB)
 			goto out;
 
 		if(node_is_exp(entry, true)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_USE(prevuse->node)->operand->datatype);
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset = index; 
+				//set up the offset for alias check
+				re_ds.alias_offset = index;
 
 				if(obstacle_between_two_targets(&re_ds.head, entry, prevuse))
 					goto out;
 			}
 
-			offset = CAST2_USE(prevuse->node)->address - CAST2_USE(entry->node)->address; 
+			offset = CAST2_USE(prevuse->node)->address - CAST2_USE(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_USE(entry->node)->val) + offset, sizeof(valset_u) - offset);
 		}else{
 
@@ -1759,8 +1753,8 @@ void resolve_define(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_
 	int type;
 	re_list_t *entry, *temp;
 	re_list_t *nextdef, *nextuse, *prevdef, *prevuse, *inst;
-	valset_u vt; 
-	int offset; 
+	valset_u vt;
+	int offset;
 	int valoffset;
 
 	list_for_each_entry_safe_reverse(entry, temp, &re_deflist->deflist, deflist){
@@ -1770,9 +1764,9 @@ void resolve_define(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_
 
 
 		//we do not real with eip here, as we know every eip value
-		if(CAST2_DEF(entry->node)->operand->type == op_register 
+		if(CAST2_DEF(entry->node)->operand->type == op_register
 			&& CAST2_DEF(entry->node)->operand->data.reg.id == get_eip_id())
-			goto out;  
+			goto out;
 
 #ifdef WITH_SOLVER
 		adjust_def_constraint(entry);
@@ -1791,37 +1785,37 @@ void resolve_define(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_
 		assert(inst);
 
 		if( !(CAST2_DEF(entry->node)->val_stat & AfterKnown) )
-			goto prevdef; 
+			goto prevdef;
 
 		nextdef = find_next_def_of_def(entry, &type);
 
 		if(!nextdef)
-			goto nextuse; 
+			goto nextuse;
 
 		//nextdef has a super size
 		if(type != EXACT && type !=SUB)
 			goto nextuse;
 
-		//nextdef is an expression 
+		//nextdef is an expression
 		if(node_is_exp(entry, false)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_DEF(nextdef->node)->operand->datatype);
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset = CAST2_DEF(nextdef->node)->address- CAST2_DEF(entry->node)->address + index; 
+				//set up the offset for alias check
+				re_ds.alias_offset = CAST2_DEF(nextdef->node)->address- CAST2_DEF(entry->node)->address + index;
 
 				if(obstacle_between_two_targets(&re_ds.head, nextdef, entry))
 					goto nextuse;
 			}
 
-			//considering about the offset between two addresses; 
-			offset = CAST2_DEF(nextdef->node)->address - CAST2_DEF(entry->node)->address; 
+			//considering about the offset between two addresses;
+			offset = CAST2_DEF(nextdef->node)->address - CAST2_DEF(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_DEF(entry->node)->afterval) + offset, sizeof(valset_u) - offset);
 
 		}else{
@@ -1845,38 +1839,38 @@ nextuse:
 		nextuse = find_next_use_of_def(entry, &type);
 
 		if(!nextuse)
-			goto prevdef; 
-	
-		//between the next use, there is a define	
-		if(nextdef && node1_add_before_node2(nextuse, nextdef))
-			goto prevdef; 
+			goto prevdef;
 
-		//there is unknown memory write between the current use 
+		//between the next use, there is a define
+		if(nextdef && node1_add_before_node2(nextuse, nextdef))
+			goto prevdef;
+
+		//there is unknown memory write between the current use
 		//and the next use
 
 		if(type != EXACT && type !=SUB)
 			goto prevdef;
 
-		//nextdef is an expression 
+		//nextdef is an expression
 		if(node_is_exp(entry, false)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_USE(nextuse->node)->operand->datatype);
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset = CAST2_USE(nextuse->node)->address- CAST2_DEF(entry->node)->address + index; 
+				//set up the offset for alias check
+				re_ds.alias_offset = CAST2_USE(nextuse->node)->address- CAST2_DEF(entry->node)->address + index;
 
 				if(obstacle_between_two_targets(&re_ds.head, nextuse, entry))
 					goto prevdef;
 			}
 
-			//considering about the offset between two addresses; 
-			offset = CAST2_USE(nextuse->node)->address - CAST2_DEF(entry->node)->address; 
+			//considering about the offset between two addresses;
+			offset = CAST2_USE(nextuse->node)->address - CAST2_DEF(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_DEF(entry->node)->afterval) + offset, sizeof(valset_u) - offset);
 
 		}else{
@@ -1893,40 +1887,40 @@ nextuse:
 				add_to_uselist(nextuse, re_uselist);
 			}else{assert_val(nextuse, vt,false);}
 
-//assign to the previous define 
+//assign to the previous define
 prevdef:
 		if( !(CAST2_DEF(entry->node)->val_stat & BeforeKnown) )
-			goto out; 
+			goto out;
 
 		prevdef = find_prev_def_of_def(entry, &type);
 
 		if(!prevdef)
-			goto prevuse; 
+			goto prevuse;
 
 
 		if(type != EXACT && type !=SUB)
 			goto prevuse;
 
-		//nextdef is an expression 
+		//nextdef is an expression
 		if(node_is_exp(entry, false)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_DEF(prevdef->node)->operand->datatype);
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset =  index; 
+				//set up the offset for alias check
+				re_ds.alias_offset =  index;
 
 				if(obstacle_between_two_targets(&re_ds.head, entry, prevdef))
 					goto prevuse;
 			}
 
-			//considering about the offset between two addresses; 
-			offset = CAST2_DEF(prevdef->node)->address - CAST2_DEF(entry->node)->address; 
+			//considering about the offset between two addresses;
+			offset = CAST2_DEF(prevdef->node)->address - CAST2_DEF(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_DEF(entry->node)->beforeval) + offset, sizeof(valset_u) - offset);
 
 		}else{
@@ -1948,34 +1942,34 @@ prevuse:
 		prevuse = find_prev_use_of_def(entry, &type);
 
 		if(!prevuse)
-			goto out; 
-		
+			goto out;
+
 		if(prevdef && node1_add_before_node2(prevdef, prevuse))
-			goto out; 
+			goto out;
 
 		if(type != EXACT && type !=SUB)
 			goto out;
 
-		//nextdef is an expression 
+		//nextdef is an expression
 		if(node_is_exp(entry, false)){
 
-			int memsize; 
-			int index; 
+			int memsize;
+			int index;
 
 			//get size of the next def
 			memsize = translate_datatype_to_byte(CAST2_USE(prevuse->node)->operand->datatype);
 			//check unknown memory write between each overlap byte
 			for(index = 0; index < memsize; index++){
 
-				//set up the offset for alias check 
-				re_ds.alias_offset =  index; 
+				//set up the offset for alias check
+				re_ds.alias_offset =  index;
 
 				if(obstacle_between_two_targets(&re_ds.head, entry, prevuse))
 					goto out;
 			}
 
-			//considering about the offset between two addresses; 
-			offset = CAST2_USE(prevuse->node)->address - CAST2_DEF(entry->node)->address; 
+			//considering about the offset between two addresses;
+			offset = CAST2_USE(prevuse->node)->address - CAST2_DEF(entry->node)->address;
 			memcpy(&vt, ((void*)&CAST2_DEF(entry->node)->beforeval) + offset, sizeof(valset_u) - offset);
 
 		}else{
@@ -2000,11 +1994,11 @@ out:
 
 int insttype_to_index(enum x86_insn_type type){
 
-	int index; 
+	int index;
 	for(index = 0; index < ninst; index++){
-		
+
 		if(opcode_index_tab[index].type == type){
-			return index; 
+			return index;
 		}
 	}
 
@@ -2015,7 +2009,7 @@ int insttype_to_index(enum x86_insn_type type){
 static bool use_after_def(re_list_t *use, int regid, re_list_t *def[], int ndef){
 
 	int defindex;
-	x86_insn_t* x86inst; 
+	x86_insn_t* x86inst;
 	re_list_t* inst;
 
 	inst = find_inst_of_node(use);
@@ -2030,66 +2024,66 @@ static bool use_after_def(re_list_t *use, int regid, re_list_t *def[], int ndef)
 			//this use has been redefined, so we cannot check
 			if(use->id < def[defindex]->id)
 				return true;
-		}	
+		}
 	}
-	return false; 
+	return false;
 }
 
 void correctness_check(re_list_t * instnode){
 
-	inst_node_t *inst; 
+	inst_node_t *inst;
 	re_list_t *use[NOPD], *def[NOPD];
-	operand_val_t *regvals; 
-	use_node_t * tempuse; 
+	operand_val_t *regvals;
+	use_node_t * tempuse;
 	def_node_t * tempdef;
 
-	size_t nuse, ndef; 
-	int i,j, regindex; 
+	size_t nuse, ndef;
+	int i,j, regindex;
 
-	//get the operands log from re_ds	
-	inst = (inst_node_t*)(instnode->node); 
+	//get the operands log from re_ds
+	inst = (inst_node_t*)(instnode->node);
 	regvals = &re_ds.oplog_list.opval_list[inst->inst_index];
 
 	if(regvals -> regnum == 0)
-		return; 
-	
+		return;
+
 	obtain_inst_elements(instnode, use, def, &nuse, &ndef);
 
-	//check every use	
+	//check every use
 	//we can only check the values of registers
 	for(i = 0; i < nuse; i++ ){
 
-		tempuse = CAST2_USE(use[i]->node);		
+		tempuse = CAST2_USE(use[i]->node);
 
 		if(!tempuse->val_known)
-			continue; 
+			continue;
 
 		if(tempuse->usetype == Base ){
 			for(regindex = 0; regindex < regvals->regnum; regindex++){
 
 				//if this use has been redefined, we do not consider about it
 				if(use_after_def(use[i], tempuse->operand->data.expression.base.id, def, ndef))
-					continue; 
+					continue;
 
 				//for debug use
 				if(tempuse->operand->data.expression.base.id == get_esp_id()){
 					if(tempuse->val.dword == regvals->regs[regindex].val.dword || tempuse->val.dword == regvals->regs[regindex].val.dword - 0x4)
 						continue;
-				}				
+				}
 				//end debugging use;
 
 
 				if(tempuse->operand->data.expression.base.id == regvals->regs[regindex].reg_num)
 					assert_val(use[i], regvals->regs[regindex].val, false);
-			}			
-		}	
-	
+			}
+		}
+
 		if(tempuse->usetype == Index){
 			for(regindex = 0; regindex < regvals->regnum; regindex++){
-	
+
 				//if this use has been redefined, we do not consider about it
 				if(use_after_def(use[i], tempuse->operand->data.expression.index.id, def, ndef))
-					continue; 
+					continue;
 
 
                                 if(tempuse->operand->data.expression.index.id == regvals->regs[regindex].reg_num)
@@ -2100,17 +2094,17 @@ void correctness_check(re_list_t * instnode){
 		if(tempuse->usetype == Opd && tempuse->operand->type == op_register){
 
 			for(regindex = 0; regindex < regvals->regnum; regindex++){
-				
+
 				//if this use has been redefined, we do not consider about it
 				if(use_after_def(use[i], tempuse->operand->data.reg.id, def, ndef))
-					continue; 
+					continue;
 
                                 if(tempuse->operand->data.reg.id == regvals->regs[regindex].reg_num)
                                         assert_val(use[i], regvals->regs[regindex].val, false);
                         }
 		}
 	}
-	
+
 	//check before value of def
 	for(j = 0; j < ndef; j++){
 		tempdef = CAST2_DEF(def[j]->node);
@@ -2118,7 +2112,7 @@ void correctness_check(re_list_t * instnode){
 		if(tempdef->operand->type == op_register && (tempdef->val_stat & BeforeKnown)){
 			for(regindex = 0; regindex < regvals->regnum; regindex++){
 				if(use_after_def(def[j], tempdef->operand->data.reg.id, def, ndef))
-					continue; 			
+					continue;
 
                                 if(tempdef->operand->data.reg.id == regvals->regs[regindex].reg_num)
                                         assert_val(def[j], regvals->regs[regindex].val, true);
@@ -2126,7 +2120,7 @@ void correctness_check(re_list_t * instnode){
 		}
 	}
 }
-	
+
 
 void resolve_inst(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_instlist) {
 /* list_for_each_entry (instlist)
@@ -2134,15 +2128,15 @@ void resolve_inst(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_in
  * 	justify whether those known operands meet the requirement of constraints
  *	According to instruction semantics, resolve define/use  and add them to the corresponding list
  */
-	int index; 
-	x86_insn_t * inst; 	
+	int index;
+	x86_insn_t * inst;
 	re_list_t *entry, *temp;
 
 	list_for_each_entry_safe_reverse(entry, temp, &re_instlist->instlist, instlist){
 
-		inst = re_ds.instlist + CAST2_INST(entry->node)->inst_index; 
+		inst = re_ds.instlist + CAST2_INST(entry->node)->inst_index;
 		index = insttype_to_index(inst->type);
-		
+
 		if(index >= 0){
 			inst_resolver[index](entry, re_deflist, re_uselist);
 		}
@@ -2152,34 +2146,31 @@ void resolve_inst(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_in
 
 		list_del(&entry->instlist);
 
-#ifdef DATA_LOGGED
-	//check the resolved values against the ground truth log
-	//to aid the debugging process
-	//do not perform correctness check when verifying alias
+		//check the resolved values against the ground truth log
+		//to aid the debugging process
+		//do not perform correctness check when verifying alias
 		if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-			correctness_check(entry);	
-#endif
+			correctness_check(entry);
 	}
 }
 
 
 #ifdef FIX_OPTM
-
 void fix_optimization(re_list_t* inst){
-	
+
 	re_list_t *dst[NOPD], *src[NOPD];
         int nuse, ndef;
         int it;
         def_node_t *def;
         use_node_t *use;
-	re_list_t re_deflist, re_uselist, re_instlist;  	
+	re_list_t re_deflist, re_uselist, re_instlist;
 
 	INIT_LIST_HEAD(&re_deflist.deflist);
 	INIT_LIST_HEAD(&re_uselist.uselist);
-	INIT_LIST_HEAD(&re_instlist.instlist);	
+	INIT_LIST_HEAD(&re_instlist.instlist);
 
-        //get the operands of the instruciton   
-        obtain_inst_operand(inst, src, dst, &nuse, &ndef);		
+        //get the operands of the instruciton
+        obtain_inst_operand(inst, src, dst, &nuse, &ndef);
 
 	for(it = 0; it < nuse; it++){
 		if(CAST2_USE(src[it]->node)->val_known)
@@ -2193,11 +2184,7 @@ void fix_optimization(re_list_t* inst){
 
 	re_resolve(&re_deflist, &re_uselist, &re_instlist);
 }
-	
-
 #endif
-
-
 
 
 int check_inst_resolution(re_list_t* inst){
@@ -2206,15 +2193,15 @@ int check_inst_resolution(re_list_t* inst){
 
 	list_for_each_entry_reverse(entry, &inst->list, list) {
 
-		if (entry == &re_ds.head) return 1;	
+		if (entry == &re_ds.head) return 1;
 
-		if(entry->node_type == InstNode) return 1; 
+		if(entry->node_type == InstNode) return 1;
 
 		if (entry->node_type == DefNode){
 			if(! (CAST2_DEF(entry->node)->val_stat & AfterKnown))
 				return 0;
 
-			if( CAST2_DEF(entry->node)->operand->type == op_expression 
+			if( CAST2_DEF(entry->node)->operand->type == op_expression
 				&& !CAST2_DEF(entry->node)->address)
 					return 0;
 
@@ -2227,8 +2214,8 @@ int check_inst_resolution(re_list_t* inst){
 			if(!CAST2_USE(entry->node)->val_known)
 				return 0;
 
-			if(CAST2_USE(entry->node)->usetype == Opd 
-				&& CAST2_USE(entry->node)->operand->type == op_expression)					
+			if(CAST2_USE(entry->node)->usetype == Opd
+				&& CAST2_USE(entry->node)->operand->type == op_expression)
 				if(!CAST2_USE(entry->node)->address)
 					return 0;
 		}
@@ -2239,19 +2226,19 @@ int check_inst_resolution(re_list_t* inst){
 
 void res_expression(re_list_t * exp, re_list_t *uselist){
 
-	re_list_t *index, *base, *entry; 
+	re_list_t *index, *base, *entry;
 	x86_op_t* opd;
 	unsigned baseaddr, indexaddr;
 
 	index = NULL;
 	base = NULL;
-	baseaddr = 0; 
+	baseaddr = 0;
 	indexaddr = 0;
 
 	opd = (exp->node_type == DefNode ? CAST2_DEF(exp->node)->operand : CAST2_USE(exp->node)->operand);
 
 	get_element_of_exp(exp, &index, &base);
-	
+
 	switch (exp_addr_status(base, index)) {
 		case KBaseKIndex:
 			if (base){
@@ -2319,7 +2306,7 @@ void res_expression(re_list_t * exp, re_list_t *uselist){
 	}
 
 	if(exp->node_type == DefNode){
-		re_list_t *nextdef; 
+		re_list_t *nextdef;
 		int type;
 		valset_u rv;
 
@@ -2352,12 +2339,12 @@ void res_expression(re_list_t * exp, re_list_t *uselist){
 	}
 
 	if(exp->node_type == UseNode){
-		re_list_t *nextdef;	
+		re_list_t *nextdef;
 		int type;
 		valset_u rv;
 
-		CAST2_USE(exp->node)->address = baseaddr + 
-		    indexaddr * opd->data.expression.scale + 
+		CAST2_USE(exp->node)->address = baseaddr +
+		    indexaddr * opd->data.expression.scale +
 		    (int)(opd->data.expression.disp);
 
 
@@ -2367,7 +2354,7 @@ void res_expression(re_list_t * exp, re_list_t *uselist){
 
 		//take care of lea instruction particularly
 		if(!ok_to_check_alias(exp))
-			return; 
+			return;
 
 		if(assign_use_mem_val(exp, &rv, uselist)){
 			if(!CAST2_USE(exp->node)->val_known){
@@ -2376,7 +2363,7 @@ void res_expression(re_list_t * exp, re_list_t *uselist){
 				assert_val(exp, rv, false);
 			}
 		}
-	}	
+	}
 }
 
 bool node_is_exp(re_list_t* node, bool use){
@@ -2405,10 +2392,10 @@ bool address_is_known(re_list_t *node) {
 void get_src_of_def(re_list_t* def, re_list_t **use, int *nuse){
 
 	re_list_t * entry;
-	re_list_t * inst; 
+	re_list_t * inst;
 
 
-	x86_insn_t* x86inst; 
+	x86_insn_t* x86inst;
 
 	*nuse = 0;
 
@@ -2420,17 +2407,17 @@ void get_src_of_def(re_list_t* def, re_list_t **use, int *nuse){
 	list_for_each_entry_reverse(entry, &def->list, list){
 
 		if(entry->node_type != UseNode)
-			return; 
+			return;
 
 		if(CAST2_USE(entry->node)->usetype == Opd || (strcmp(x86inst->mnemonic, "lea") == 0) ){
-			use[(*nuse)++] = entry; 
+			use[(*nuse)++] = entry;
 		}
 	}
 }
 
 //only to get the operands of an instruction
 void obtain_inst_elements(re_list_t* inst, re_list_t **use, re_list_t **def, int *nuse, int *ndef){
-		
+
 	bool tak, addr, tak1, addr1;
 	re_list_t* entry;
 
@@ -2444,7 +2431,7 @@ void obtain_inst_elements(re_list_t* inst, re_list_t **use, re_list_t **def, int
 		if(entry->node_type == UseNode){
 			use[(*nuse)++] = entry;
 		}
-		
+
 		if(entry->node_type == DefNode){
 			def[(*ndef)++] = entry;
 		}
@@ -2453,7 +2440,7 @@ void obtain_inst_elements(re_list_t* inst, re_list_t **use, re_list_t **def, int
 
 //only to get the operands of an instruction
 void obtain_inst_operand(re_list_t* inst, re_list_t **use, re_list_t **def, int *nuse, int *ndef){
-		
+
 	bool tak, addr, tak1, addr1;
 	re_list_t* entry;
 
@@ -2468,7 +2455,7 @@ void obtain_inst_operand(re_list_t* inst, re_list_t **use, re_list_t **def, int 
 			if(CAST2_USE(entry->node)->usetype == Opd)
 				use[(*nuse)++] = entry;
 		}
-		
+
 		if(entry->node_type == DefNode){
 			def[(*ndef)++] = entry;
 		}
@@ -2476,7 +2463,7 @@ void obtain_inst_operand(re_list_t* inst, re_list_t **use, re_list_t **def, int 
 }
 
 void traverse_inst_operand(re_list_t* inst, re_list_t **use, re_list_t **def, re_list_t* uselist, re_list_t* deflist, int *nuse, int *ndef){
-		
+
 	bool tak, addr, tak1, addr1;
 	re_list_t* entry;
 
@@ -2488,7 +2475,7 @@ void traverse_inst_operand(re_list_t* inst, re_list_t **use, re_list_t **def, re
 		if(entry->node_type == InstNode) break;
 
 		if(entry->node_type == UseNode){
-			if(node_is_exp(entry, true)){ 
+			if(node_is_exp(entry, true)){
 				tak = CAST2_USE(entry->node)->val_known;
 				addr = CAST2_USE(entry->node)->address;
 
@@ -2505,7 +2492,7 @@ void traverse_inst_operand(re_list_t* inst, re_list_t **use, re_list_t **def, re
 			if(CAST2_USE(entry->node)->usetype == Opd)
 				use[(*nuse)++] = entry;
 		}
-		
+
 		if(entry->node_type == DefNode){
 			if(node_is_exp(entry, false)){
 
@@ -2538,9 +2525,9 @@ void split_expression_to_use(x86_op_t* opd){
 	re_list_t *base, *index;
 
 #ifdef WITH_SOLVER
-	re_list_t * exp; 
+	re_list_t * exp;
 	valset_u tempval;
-	Z3_ast baseast, indexast, scaleast, dispast; 
+	Z3_ast baseast, indexast, scaleast, dispast;
 
 	exp = list_first_entry(&re_ds.head.list, re_list_t, list);
 #endif
@@ -2552,16 +2539,16 @@ void split_expression_to_use(x86_op_t* opd){
 		case No_Reg:
 			break;
 		case Base_Reg:
-			 base = add_new_use(opd, Base);	
+			 base = add_new_use(opd, Base);
 			break;
 		case Index_Reg:
-			index = add_new_use(opd, Index);	
+			index = add_new_use(opd, Index);
 			break;
 		case Base_Index_Reg:
-			base = add_new_use(opd, Base);	
-			index = add_new_use(opd, Index);	
+			base = add_new_use(opd, Base);
+			index = add_new_use(opd, Index);
 			break;
-		default: 
+		default:
 			assert(0);
 	}
 
@@ -2573,9 +2560,9 @@ void split_expression_to_use(x86_op_t* opd){
 		tempval.dword = 0;
 		baseast = val_to_bv(tempval, sizeof(unsigned));
 	}
-	
+
 	if(index){
-		indexast = CAST2_USE(index->node)->constraint; 
+		indexast = CAST2_USE(index->node)->constraint;
 	}else{
 		tempval.dword = 0;
 		indexast = val_to_bv(tempval, sizeof(unsigned));
@@ -2592,7 +2579,7 @@ void split_expression_to_use(x86_op_t* opd){
 	}else{
 		CAST2_DEF(exp->node)->addresscst = Z3_mk_bvadd(re_ds.zctx, Z3_mk_bvadd(re_ds.zctx, baseast, Z3_mk_bvmul(re_ds.zctx, indexast, scaleast)), dispast);
 	}
-	
+
 #endif
 }
 
@@ -2702,7 +2689,7 @@ void clean_valset(valset_u *vt, enum x86_op_datatype datatype, bool sign) {
 
 bool sign_of_valset(valset_u *vt, enum x86_op_datatype datatype) {
 	bool sign;
-	
+
 	switch (datatype) {
 		case op_byte:
 			sign = vt->byte & (1 << (BYTE_SIZE - 1));
@@ -2747,7 +2734,7 @@ re_list_t *get_entry_by_inst_id(unsigned inst_index) {
 	re_list_t *entry;
 
 	list_for_each_entry_reverse(entry, &re_ds.head.list, list) {
-		if ((entry->node_type == InstNode) && 
+		if ((entry->node_type == InstNode) &&
 			(CAST2_INST(entry->node)->inst_index == inst_index)) {
 			return entry;
 		}

@@ -2,8 +2,10 @@
 #define __GLOBAL__
 
 #include <libdis.h>
+
 #include "elf_core.h"
 #include "elf_binary.h"
+
 
 extern char *core_path;
 extern char *bin_path;
@@ -13,6 +15,7 @@ extern char *inst_path;
 extern char* log_path;
 extern char* xmm_path;
 #endif
+
 
 void set_core_path(char *path);
 char * get_core_path(void);
@@ -30,6 +33,7 @@ void set_bin_info(elf_binary_info *binaryinfo);
 elf_binary_info *get_bin_info(void);
 
 unsigned long countvalidaddress(char *filename);
+unsigned long countvalidlog(char *filename);
 
 #ifdef DATA_LOGGED
 void set_log_path(char * path);

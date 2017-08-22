@@ -15,7 +15,7 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 
 	int index, segindex, threadnum;
 	int offset = 0;
-	coredata_t * coredata;	
+	coredata_t * coredata;
 
 
 //initialize coredata
@@ -28,18 +28,18 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 	if(!coredata->coremem){
 		free(coredata);
 		return NULL;
-	}	
+	}
 
 	memset(coredata->coremem, 0, core_info->phdr_num * sizeof(memseg_t));
 
-	segindex = 0;	
+	segindex = 0;
 //copy memory from core dump or mapped file into coredata
 	for(index = 0; index < core_info->phdr_num; index++){
 
 		if (!(core_info->phdr[index].p_type & PT_LOAD))
 			continue;
 
-		coredata->coremem[segindex].data = 
+		coredata->coremem[segindex].data =
 			malloc(core_info->phdr[index].p_memsz);
 
 		if(!coredata->coremem[segindex].data){
@@ -54,14 +54,14 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 
 		if (offset == ME_NDUMP) {
 			get_data_from_specified_file(
-				core_info, binary_info, 
-				core_info->phdr[index].p_vaddr, 
-				coredata->coremem[segindex].data, 
+				core_info, binary_info,
+				core_info->phdr[index].p_vaddr,
+				coredata->coremem[segindex].data,
 				core_info->phdr[index].p_memsz);
 		} else if (offset > 0) {
 			get_data_from_core(
-				core_info->phdr[index].p_offset, 
-				core_info->phdr[index].p_memsz, 
+				core_info->phdr[index].p_offset,
+				core_info->phdr[index].p_memsz,
 				coredata->coremem[segindex].data);
 		}else{
 			assert(0);
@@ -71,9 +71,9 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 		coredata->coremem[segindex].high = core_info->phdr[index].p_vaddr + core_info->phdr[index].p_memsz;
 
 		segindex++;
-	}	
-	
-	coredata->memsegnum = segindex; 
+	}
+
+	coredata->memsegnum = segindex;
 
 
 	re_ds.root = NULL;
@@ -84,30 +84,25 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 		print_operand(*re_ds.root);
 	}
 
-	memcpy(coredata->corereg.regs, 
-		core_info->note_info->core_thread.threads_status[threadnum].pr_reg, 
+	memcpy(coredata->corereg.regs,
+		core_info->note_info->core_thread.threads_status[threadnum].pr_reg,
 		ELF_NGREG * sizeof(elf_greg_t));
 
-	memcpy(coredata->corereg.xmm_reg, 
-		core_info->note_info->core_thread.threads_context[threadnum].xmm_reg, 
+	memcpy(coredata->corereg.xmm_reg,
+		core_info->note_info->core_thread.threads_context[threadnum].xmm_reg,
 		32*(sizeof (long)));
 
-#ifdef DATA_LOGGED
-	{
-		FILE *file; 
-		if(file = fopen(get_xmm_path(), "r")){
-			fread(coredata->corereg.xmm_reg, sizeof(long), 32, file);
-		}	
+	FILE *file;
+	if(file = fopen(get_xmm_path(), "r")){
+		fread(coredata->corereg.xmm_reg, sizeof(long), 32, file);
 	}
-#endif
 
-	coredata->corereg.gs_base = 
+	coredata->corereg.gs_base =
 		core_info->note_info->core_thread.lts[threadnum].lts_info[0].base;
 
 	return coredata;
 }
 
-#ifdef DATA_LOGGED 
 #define LOG_MAX_SIZE 256
 #define REGDEM ";"
 #define INFODEM ":"
@@ -115,34 +110,34 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 
 static void process_log_line(char* line, operand_val_t * oplog){
 
-	char *str1, *str2, *saveptr1, *saveptr2; 
+	char *str1, *str2, *saveptr1, *saveptr2;
 	char *token, *regid, *regval;
-	char *endptr;  
-	int regcount; 
+	char *endptr;
+	int regcount;
 
-	int vallen; 
+	int vallen;
 	int i, j;
-	
+
 	for(regcount = 0, str1 = line; ;regcount++, str1 = NULL){
 		token = strtok_r(str1, REGDEM, &saveptr1);
 		if(token == NULL)
-			break; 	
-			
+			break;
+
 		regid = strtok_r(token, INFODEM, &saveptr2);
 		assert(regid != NULL);
 		regval = strtok_r(NULL, INFODEM, &saveptr2);
 		assert(regval != NULL);
 
-		//process the id and the value 
+		//process the id and the value
 		oplog->regs[regcount].reg_num = strtol(regid, &endptr, 10);
 
 		//conver the string to value
-		//as the length of the string is varying, 
-		//we use iterations instead of strtol 
-		
+		//as the length of the string is varying,
+		//we use iterations instead of strtol
+
 		if(regval[strlen(regval)-1] == '\n')
 			regval[strlen(regval)-1] = 0;
-		
+
 		for(i = strlen(regval) - 2, j = 0; i >=2; i -= 2, j++){
 			char temp[5];
 			temp[0] = '0';
@@ -155,12 +150,13 @@ static void process_log_line(char* line, operand_val_t * oplog){
 	oplog->regnum = regcount;
 }
 
+
 unsigned long load_log(char* log_path, operand_val_t *oploglist){
 
 	unsigned index;
 	char log_buf[LOG_MAX_SIZE];
 
-	FILE* file; 
+	FILE* file;
 
 
 	if((file = fopen(log_path, "r")) == NULL){
@@ -172,7 +168,7 @@ unsigned long load_log(char* log_path, operand_val_t *oploglist){
 
 
 	memset(log_buf, 0, LOG_MAX_SIZE);
-	
+
 	while(fgets(log_buf, sizeof(log_buf), file) != 0){
 
 		if(strncmp(log_buf, "noreg", 5) == 0){
@@ -187,9 +183,6 @@ unsigned long load_log(char* log_path, operand_val_t *oploglist){
 		memset(log_buf, 0, LOG_MAX_SIZE);
 	}
 }
-
-
-#endif
 
 
 unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info, char *trace_file, x86_insn_t *instlist){
@@ -207,7 +200,7 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
         return -1;
     }
 
-    i = 0; 	
+    i = 0;
 
     while (fgets(line, sizeof(line), file) != NULL) {
         // need to check the result of strtoll instead of strncmp
@@ -219,7 +212,7 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
         // So if input is bigger than 0x80000000, it will return 0x7fffffff
         address = (Elf32_Addr)strtoll(line, NULL, 16);
 
-	printf("The address of the current instruction is %s or %x\n", line, address);	
+	printf("The address of the current instruction is %s or %x\n", line, address);
 
         offset = get_offset_from_address(core_info, address);
 
@@ -231,17 +224,17 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
         if (offset == ME_NDUMP) {
             if((get_data_from_specified_file(core_info, binary_info, address, inst_buf, INST_LEN)) < 0)
                 return -1;
-        }   
+        }
 
         if (offset >= 0)
             get_data_from_core((Elf32_Addr)offset, INST_LEN, inst_buf);
-         
+
         if (disasm_one_inst(inst_buf, INST_LEN, 0, instlist + i) < 0) {
             LOG(stderr, "ERROR: The PC points to an error position\n");
             return -1;
         }
 
-	instlist[i++].addr = address;	
+	instlist[i++].addr = address;
     }
     return i;
 }
