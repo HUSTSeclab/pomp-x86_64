@@ -5,23 +5,21 @@ Reverse Execution From CoreDump
 
 ## Prerequirement
 
-### libelf / libdisasm
+### libelf
 
     $ sudo apt-get install libelf1 libelf-dev
 
 library to read and write ELF files
 
-### custome-tailor libdisasm
+### capstone
 
-We use a custome-tailor libdisasm. The corresponding installation process is as follows:
+Building from [Source Code](https://github.com/aquynh/capstone):
 
-```sh
-cd libdsiasm
-./configure
-make
+**For Linux:**
+
+```
+$ ./make.sh
 sudo make install
-
-sudo ldconfig
 ```
 
 ### autoconf / automake

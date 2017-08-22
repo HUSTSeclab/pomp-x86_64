@@ -10,7 +10,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_PROG_CC
 
 # Checks for libraries.
-AC_CHECK_LIB([disasm], [x86_init], [], [AC_MSG_ERROR([unable to find the x86_init() function])])
+AC_CHECK_LIB([capstone], [cs_disasm], [], [AC_MSG_ERROR([unable to find the cs_disasm function])])
 AC_CHECK_LIB([elf], [gelf_getehdr], [], [AC_MSG_ERROR([unable to find the gelf_getehdr() function])])
 AC_CHECK_LIB([z3], [Z3_algebraic_is_value], [], [AC_MSG_ERROR([unable to find the Z3_algebraic_is_value() function])])
 
