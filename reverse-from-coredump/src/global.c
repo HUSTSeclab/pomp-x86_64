@@ -65,7 +65,7 @@ void set_log_path(char* path){
 	log_path = path;
 }
 
-char* get_log_path(void){
+char *get_log_path(void){
 	return log_path;
 }
 
@@ -73,7 +73,7 @@ void set_xmm_path(char* path){
 	xmm_path = path;
 }
 
-char* get_xmm_path(void){
+char *get_xmm_path(void){
 	return xmm_path;
 }
 

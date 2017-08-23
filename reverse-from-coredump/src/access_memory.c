@@ -13,109 +13,51 @@
 #include "reverse_log.h"
 #include "global.h"
 
-// get the value by the name of register
-int value_of_register(char *reg, Elf32_Addr *value, struct elf_prstatus thread){
+// get the value by the name of register, only used in registers from address expression
+int get_value_of_register(x86_reg reg, Elf32_Addr *value, struct elf_prstatus thread){
 	int match = 0;
-	if(strcmp(reg, "eax") == 0){
-		*value = thread.pr_reg[EAX];
-		match = 1;
-		goto out;
+	switch (reg) {
+		case X86_REG_EAX:
+			*value = thread.pr_reg[EAX];
+			match = 1;
+			break;
+		case X86_REG_EBX:
+			*value = thread.pr_reg[EBX];
+			match = 1;
+			break;
+		case X86_REG_ECX:
+			*value = thread.pr_reg[ECX];
+			match = 1;
+			break;
+		case X86_REG_EDX:
+			*value = thread.pr_reg[EDX];
+			match = 1;
+			break;
+		case X86_REG_EBP:
+			*value = thread.pr_reg[EBP];
+			match = 1;
+			break;
+		case X86_REG_ESP:
+			*value = thread.pr_reg[UESP];
+			match = 1;
+			break;
+		case X86_REG_ESI:
+			*value = thread.pr_reg[ESI];
+			match = 1;
+			break;
+		case X86_REG_EDI:
+			*value = thread.pr_reg[EDI];
+			match = 1;
+			break;
+		case X86_REG_INVALID:
+			*value = 0;
+			break;
+		default:
+			assert(0);
 	}
-
-	if(strcmp(reg, "ebx") == 0){
-		*value = thread.pr_reg[EBX];
-		match = 1;
-		goto out;
-	}
-
-	if(strcmp(reg, "ecx") == 0){
-		*value = thread.pr_reg[ECX];
-		match = 1;
-		goto out;
-	}
-
-	if(strcmp(reg, "edx") == 0){
-		*value = thread.pr_reg[EDX];
-		match = 1;
-		goto out;
-	}
-
-	if(strcmp(reg, "esi") == 0){
-		*value = thread.pr_reg[ESI];
-		match = 1;
-		goto out;
-	}
-
-	if(strcmp(reg, "edi") == 0){
-		*value = thread.pr_reg[EDI];
-		match = 1;
-		goto out;
-	}
-
-	if(strcmp(reg, "ebp") == 0){
-		*value = thread.pr_reg[EBP];
-		match = 1;
-		goto out;
-	}
-
-	if(strcmp(reg, "esp") == 0){
-		*value = thread.pr_reg[UESP];
-		match = 1;
-		goto out;
-	}
-
-	LOG(stderr, "ERROR: register %s need analysis\n", reg);
-	assert(0);
-out:
 	return match;
 }
 
-/*
-unsigned get_value_from_xmm(appinst_t * appint, x86_reg_t reg){
-
-}
-
-// get the value of register from x86_reg_t
-unsigned int get_value_from_reg(appinst_t *appinst, x86_reg_t reg){
-    int index = get_index_from_x86_reg_t(reg);
-    unsigned int value = appinst->data.regs[index];
-    if (reg.size == 1){
-        if((strcmp(reg.name, "ah") == 0)||(strcmp(reg.name, "bh") == 0)||(strcmp(reg.name, "ch") == 0)||(strcmp(reg.name, "dh") ==0))
-            value = value & 0x0000ff00;
-        else
-            value = value & 0x000000ff;
-    }else if (reg.size == 2){
-        value = value & 0x0000ffff;
-    }else if (reg.size == 4){
-        // No change
-    }
-
-    return value;
-}
-
-// get the value of register from x86_reg_t
-void set_value_to_reg(appinst_t *appinst, x86_reg_t reg, unsigned int value){
-    int index = get_index_from_x86_reg_t(reg);
-    LOG(stdout, "DEBUG: Set reg %s to value 0x%x\n", reg.name, value);
-    unsigned int newvalue = appinst->data.regs[index];
-    if (reg.size == 1){
-        if((strcmp(reg.name, "ah") == 0)||(strcmp(reg.name, "bh") == 0)||(strcmp(reg.name, "ch") == 0)||(strcmp(reg.name, "dh") ==0)){
-            newvalue = newvalue & 0xffff00ff;
-            newvalue += value << 8;
-        }else{
-            newvalue = newvalue & 0xffffff00;
-            newvalue += value;
-        }
-    }else if (reg.size == 2){
-        newvalue = newvalue & 0xffff0000;
-        newvalue += value;
-    }else if (reg.size == 4){
-        newvalue = value;
-    }
-
-    appinst->data.regs[index] = newvalue;
-}
-*/
 //determine the segment this address exists.
 //if -1, then this address does not exist in any segment. Illegal access!
 int address_segment(elf_core_info* core_info, Elf32_Addr address){

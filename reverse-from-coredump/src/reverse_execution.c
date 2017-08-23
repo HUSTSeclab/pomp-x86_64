@@ -26,6 +26,7 @@ int main(int argc, char *argv[]){
 	elf_core_info *core_info;
 	elf_binary_info *binary_info;
 	coredata_t *coredata;
+	cs_insn *rawinstlist;
 
 //	size_t lognum;
 //	operand_val_t *oploglist;
@@ -76,14 +77,14 @@ int main(int argc, char *argv[]){
 		LOG(stderr, "ERROR: read file error when counting linenum\n");
 		exit(1);
 	}
-/*
-	rawinstlist = (x86_insn_t *)malloc(instnum * sizeof(x86_insn_t));
+
+	rawinstlist = (cs_insn *)malloc(instnum * sizeof(cs_insn));
 	if (!rawinstlist){
 		LOG(stderr, "ERROR: malloc error in main\n");
 		exit(1);
 	}
 
-	memset(rawinstlist, 0, instnum * sizeof(x86_insn_t));
+	memset(rawinstlist, 0, instnum * sizeof(cs_insn));
 	result = load_trace(core_info, binary_info, get_inst_path(), rawinstlist);
 
 	if (result < 0) {
@@ -95,7 +96,7 @@ int main(int argc, char *argv[]){
 	log_instructions(rawinstlist, instnum);
 	return 0;
 #endif
-
+/*
 	lognum = countvalidlog(get_log_path());
 	if(lognum <= 0){
 		LOG(stderr, "Warning: There is no valid log\n");
@@ -141,10 +142,10 @@ int main(int argc, char *argv[]){
 #endif
 
 	reverse_instructions();
+*/
 
 	//do some cleanup here
-	//destroy_instlist(rawinstlist);
-*/
+	destroy_instlist(rawinstlist);
 	destroy_core_info(core_info);
 	destroy_bin_info(binary_info);
 }

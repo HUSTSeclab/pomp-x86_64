@@ -31,13 +31,11 @@ elf_binary_info *get_bin_info(void);
 unsigned long countvalidaddress(char *filename);
 unsigned long countvalidlog(char *filename);
 
-#ifdef DATA_LOGGED
 void set_log_path(char *path);
 char * get_log_path(void);
 unsigned long countvalidlog(char *filename);
 void set_xmm_path(char *path);
 char * get_xmm_path(void);
-#endif
 
 #ifdef BIN_ALIAS
 extern char * sum_path;

@@ -81,9 +81,9 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 
 	//take care of registers, including xmm and gs
 	threadnum = select_thread(core_info, binary_info);
-/*
+
 	if(re_ds.root){
-		print_operand(*re_ds.root);
+		//print_operand(*re_ds.root);
 	}
 
 	memcpy(coredata->corereg.regs,
@@ -95,15 +95,18 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 		32*(sizeof (long)));
 
 	FILE *file;
-	if(file = fopen(get_xmm_path(), "r")){
-		fread(coredata->corereg.xmm_reg, sizeof(long), 32, file);
+	if (file = fopen(get_xmm_path(), "r")) {
+		if(fread(coredata->corereg.xmm_reg, sizeof(long), 32, file) == 0) {
+			free(coredata->coremem);
+			free(coredata);
+			assert(0);
+		}
 	}
 
 	coredata->corereg.gs_base =
 		core_info->note_info->core_thread.lts[threadnum].lts_info[0].base;
 
 	return coredata;
-*/
 }
 
 #define LOG_MAX_SIZE 256
@@ -184,15 +187,14 @@ unsigned long load_log(char* log_path, operand_val_t *oploglist){
 }
 
 
-/*
-unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info, char *trace_file, x86_insn_t *instlist){
+unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info, char *trace_file, cs_insn *instlist){
 
 	char line[ADDRESS_SIZE + 2];
 	int offset = 0;
 	char inst_buf[INST_LEN];
 	unsigned long i;
 	FILE *file;
-	x86_insn_t inst;
+	cs_insn inst;
 	Elf32_Addr address;
 
 	if ((file = fopen(trace_file, "r" )) == NULL){
@@ -212,7 +214,7 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
 		// So if input is bigger than 0x80000000, it will return 0x7fffffff
 		address = (Elf32_Addr)strtoll(line, NULL, 16);
 
-		printf("The address of the current instruction is %s or %x\n", line, address);
+		printf("The address of the current instruction is %x\n", address);
 
 		offset = get_offset_from_address(core_info, address);
 
@@ -234,12 +236,12 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
 			return -1;
 		}
 
-		instlist[i++].addr = address;
+		instlist[i++].address = address;
 	}
 	return i;
 }
 
-void destroy_instlist(x86_insn_t * instlist){
+void destroy_instlist(cs_insn *instlist){
 	if(instlist)
 		free(instlist);
 	instlist = NULL;
@@ -249,7 +251,7 @@ static char *useless_inst[] = {
 	"prefetcht0",
 	"lfence"
 };
-
+/*
 #define NUINST (sizeof(useless_inst)/sizeof(char *))
 
 bool verify_useless_inst(x86_insn_t *inst) {

@@ -23,40 +23,23 @@ int single_op_legal_access(cs_insn *insn, cs_x86_op *op, struct elf_prstatus thr
 	// according to index/base register and rw property of operand,
 	// identify one operand is legal or not
 	int legal = 1;
-	GElf_Addr base, index, target;
+	Elf32_Addr base, index, target;
 
 	if (op->type == X86_OP_MEM) {
-		/*
-		exp = &opd->data.expression;
-		switch (get_expreg_status(opd->data.expression)) {
-			case No_Reg:
-				return legal;
-			case Base_Reg:
-				index = 0;
-				value_of_register(exp->base.name, &base, thread);
-				break;
-			case Index_Reg:
-				base = 0;
-				value_of_register(exp->index.name, &index, thread);
-				break;
-			case Base_Index_Reg:
-				value_of_register(exp->base.name, &base, thread);
-				value_of_register(exp->index.name, &index, thread);
-				break;
-			default:
-				assert("No such case" && 0);
-				break;
-		}
-		target = base + index * (unsigned int) exp->scale + exp->disp;
+		get_value_of_register(op->mem.base, &base, thread);
+		get_value_of_register(op->mem.index, &index, thread);
+		
+		//LOG(stdout, "value of base %x and index %x\n", base, index);
+
+		target = base + index * (unsigned int) op->mem.scale + op->mem.disp;
 
 		if (address_segment(core_info, target) < 0){
 			legal = 0;
 		}
 
-		if ((opd -> access & op_write) && (!address_writable(core_info, target))) {
+		if ((op->access & CS_AC_WRITE) && (!address_writable(core_info, target))) {
 			legal = 0;
 		}
-		*/
 	}
 	return legal;
 }
@@ -84,9 +67,10 @@ int op_legal_access(cs_insn *inst, struct elf_prstatus thread, elf_core_info* co
 	return 1;
 }
 
+// according to instruction type, add essential implicit operand
+// if the libdisassembler does not provide
+void add_essential_implicit_operand(cs_insn *inst) {
 /*
-void add_essential_implicit_operand(x86_insn_t *inst) {
-	// according to instruction type, add essential implicit operand
 	// for example, add [esp] operand to push instruction;
 	x86_op_t espmem;
 	x86_op_t *esp;
@@ -98,8 +82,8 @@ void add_essential_implicit_operand(x86_insn_t *inst) {
 			add_new_implicit_operand(inst, &espmem);
 			break;
 	}
-}
 */
+}
 
 // verify whether the current instruction is legal access
 int pc_legal_access(elf_core_info* core_info, elf_binary_info *bin_info, struct elf_prstatus thread){
@@ -133,7 +117,7 @@ int pc_legal_access(elf_core_info* core_info, elf_binary_info *bin_info, struct 
 
 	// if this implicit operand is not in the operand list,
 	// add it by ourselves
-	//add_essential_implicit_operand(inst);
+	add_essential_implicit_operand(&inst);
 
 	if (!op_legal_access(&inst, thread, core_info)){
 		return 0;
