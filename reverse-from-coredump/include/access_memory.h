@@ -1,8 +1,6 @@
 #ifndef __ACCESS_MEMORY__
 #define __ACCESS_MEMORY__
 
-#include <libdis.h>
-
 #include "elf_core.h"
 #include "elf_binary.h"
 

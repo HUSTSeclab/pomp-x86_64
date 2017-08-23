@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libdis.h>
 #include <assert.h>
 #include "disassemble.h"
 #include "global.h"
@@ -17,7 +16,7 @@
 
 typedef struct op_index_pair{
 	enum x86_insn_type type;
-	int index; 
+	int index;
 }op_index_pair_t;
 
 extern op_index_pair_t opcode_index_tab[];
@@ -32,7 +31,7 @@ typedef int (*esp_resolve_func)(re_list_t *instnode, int *disp);
 
 typedef int (*post_resolve_heuristic_func)(re_list_t* inst, re_list_t* deflist, re_list_t* uselist, re_list_t* instlist);
 
-extern resolver_func inst_resolver[]; 
+extern resolver_func inst_resolver[];
 
 extern handler_func inst_handler[];
 
@@ -57,22 +56,22 @@ int translate_datatype_to_byte(enum x86_op_datatype datatype);
 	(regopd)->data.reg = oreg;
 
 #define x86_opd_is_register(opd) \
-    ((opd)->type == op_register)
+	((opd)->type == op_register)
 
 #define x86_opd_is_esp(opd) \
-    ((opd)->type == op_register && (strcmp(opd->data.reg.name, "esp") == 0))
+	((opd)->type == op_register && (strcmp(opd->data.reg.name, "esp") == 0))
 
 #define x86_opd_is_ebp(opd) \
-    ((opd)->type == op_register && (strcmp(opd->data.reg.name, "ebp") == 0))
+	((opd)->type == op_register && (strcmp(opd->data.reg.name, "ebp") == 0))
 
 #define exact_same_regs(reg1, reg2) \
-    (reg1.id == reg2.id)
+	(reg1.id == reg2.id)
 
 #define reg1_alias_reg2(reg1, reg2) \
-    (reg1.alias == reg2.id)
+	(reg1.alias == reg2.id)
 
 #define same_alias(reg1, reg2) \
-    ((reg1.alias == reg2.alias) && (reg1.alias != 0))
+	((reg1.alias == reg2.alias) && (reg1.alias != 0))
 
 #define exact_same_mem(address1, size1, address2, size2) \
 	((address1 == address2) && (size1 == size2))
@@ -87,46 +86,34 @@ int translate_datatype_to_byte(enum x86_op_datatype datatype);
 	((address1+size1 > address2) && (address1+size1 <= address2+size2))
 
 #define reg1_reg2(dest, src) \
-    (x86_opd_is_register(dest) && x86_opd_is_register(src))
+	(x86_opd_is_register(dest) && x86_opd_is_register(src))
 
 #define reg1_exp2(dest, src) \
-    (x86_opd_is_register(dest) && (src->type == op_expression))
+	(x86_opd_is_register(dest) && (src->type == op_expression))
 
 #define exp1_reg2(dest, src) \
-    (x86_opd_is_register(src) && (dest->type == op_expression))
+	(x86_opd_is_register(src) && (dest->type == op_expression))
 
 #define off1_reg2(dest, src) \
-    ((dest->type == op_offset) && (src->type == op_register))
+	((dest->type == op_offset) && (src->type == op_register))
 
 #define reg1_off2(dest, src) \
-    ((dest->type == op_register) && (src->type == op_offset))
+	((dest->type == op_register) && (src->type == op_offset))
 
 #define exp1_imm2(dest, src) \
-    ((dest->type ==op_expression) && (src->type == op_immediate))	
+	((dest->type ==op_expression) && (src->type == op_immediate))
 
 #define reg1_imm2(dest, src) \
-    ((dest->type ==op_register) && (src->type == op_immediate))	
+	((dest->type ==op_register) && (src->type == op_immediate))
 
 #define same_reg(dest, src) \
-    (reg1_reg2(dest, src) && exact_same_regs(dest->data.reg,src->data.reg))
+	(reg1_reg2(dest, src) && exact_same_regs(dest->data.reg,src->data.reg))
 
 #define diff_regs(dest, src) \
-    (reg1_reg2(dest, src) && (!exact_same_regs(dest->data.reg,src->data.reg)))
+	(reg1_reg2(dest, src) && (!exact_same_regs(dest->data.reg,src->data.reg)))
 
 #define op_with_gs_seg(opd) \
 	(((opd)->flags & op_gs_seg) >> 8 == 6)
-
-
-/*
-#define defreg_useexp(define, use) \
-    ((define->opd.type == op_register) && (use->opd.type == op_expression))
-
-#define defreg_usereg(define, use) \
-    ((define->opd.type == op_register) && (use->opd.type == op_register))
-
-#define defexp_useexp(define, use) \
-    ((define->opd.type == op_expression) && (use->opd.type == op_expression))
-*/
 
 enum expreg_status {
 	No_Reg = 0x0,
@@ -152,28 +139,28 @@ static inline enum expreg_status get_expreg_status(x86_ea_t exp){
 
 
 enum operand_status {
-    dest_register_src_register = 1,
-    dest_register_src_expression,
-    dest_register_src_offset,
-    dest_expression_src_register,
-    dest_offset_src_register,
-    dest_expression_src_imm,
-    dest_register_src_imm
+	dest_register_src_register = 1,
+	dest_register_src_expression,
+	dest_register_src_offset,
+	dest_expression_src_register,
+	dest_offset_src_register,
+	dest_expression_src_imm,
+	dest_register_src_imm
 };
 
 
 static inline enum operand_status get_operand_combine(x86_insn_t *inst) {
-    x86_op_t *dst = x86_get_dest_operand(inst);
-    x86_op_t *src = x86_get_src_operand(inst);
-    if (reg1_reg2(dst, src)) return dest_register_src_register;
-    if (reg1_exp2(dst, src)) return dest_register_src_expression;
-    if (reg1_off2(dst, src)) return dest_register_src_offset;
-    if (exp1_reg2(dst, src)) return dest_expression_src_register;
-    if (off1_reg2(dst, src)) return dest_offset_src_register;
-    if (reg1_off2(dst, src)) return dest_register_src_offset;
-    if (exp1_imm2(dst, src)) return dest_expression_src_imm;
-    if (reg1_imm2(dst, src)) return dest_register_src_imm;		
-    assert(0);
+	x86_op_t *dst = x86_get_dest_operand(inst);
+	x86_op_t *src = x86_get_src_operand(inst);
+	if (reg1_reg2(dst, src)) return dest_register_src_register;
+	if (reg1_exp2(dst, src)) return dest_register_src_expression;
+	if (reg1_off2(dst, src)) return dest_register_src_offset;
+	if (exp1_reg2(dst, src)) return dest_expression_src_register;
+	if (off1_reg2(dst, src)) return dest_offset_src_register;
+	if (reg1_off2(dst, src)) return dest_register_src_offset;
+	if (exp1_imm2(dst, src)) return dest_expression_src_imm;
+	if (reg1_imm2(dst, src)) return dest_register_src_imm;
+	assert(0);
 }
 
 

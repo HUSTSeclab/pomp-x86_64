@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <libdis.h>
 #include <stdbool.h>
+
 #include "reverse_exe.h"
 #include "insthandler.h"
 #include "reverse_log.h"

@@ -2,10 +2,11 @@
 #define __REV_EXE__
 
 #include <stdbool.h>
+#include <setjmp.h>
+
 #include "elf_core.h"
 #include "list.h"
 #include "inst_data.h"
-#include <setjmp.h>
 
 #ifdef WITH_SOLVER
 #include <z3.h>
@@ -41,7 +42,6 @@
 
 #define NOPD 16
 
-
 #ifdef BIN_ALIAS
 #define MAXFUNC 1000
 #define MAXROM 1000
@@ -55,9 +55,6 @@ typedef union valset_struct{
 	unsigned long qword[2];	 /* 8-byte */
 	unsigned long dqword[4]; /* 16-byte*/
 }valset_u; 
-
-
-#ifdef DATA_LOGGED
 
 #define MAX_REG_IN_INST 0x6
 
@@ -76,14 +73,11 @@ typedef struct opval_list{
 	operand_val_t *opval_list;
 }opval_list_t; 
 
-#endif 
-
 enum nodetype{
 	InstNode = 0x01,
 	DefNode,
 	UseNode
 };
-
 
 enum defstatus{
 	Unknown = 0x00,
@@ -119,7 +113,6 @@ typedef struct read_only_mem{
 	unsigned endaddr; 
 }read_only_mem_t;
 
-
 typedef struct bin_alias_heu{
 	unsigned mem_free_num;
 	mem_free_func_t mff[MAXFUNC];
@@ -140,7 +133,7 @@ typedef struct alias_pair{
 //a key data struct for define node
 //status: showing the value status
 typedef struct def_node_struct{
-	x86_op_t* operand; 			
+	cs_x86_op* operand; 			
 	enum defstatus val_stat;
 
 	valset_u beforeval; 
@@ -162,10 +155,9 @@ typedef struct def_node_struct{
 
 }def_node_t;
 
-
 typedef struct use_node_struct{
 	enum u_type usetype;
-	x86_op_t* operand; 
+	cs_x86_op* operand; 
 
 	bool val_known; 		
 	valset_u val; 
@@ -201,7 +193,6 @@ typedef struct inst_node_struct{
 //node: point to the contents of the node
 //list: double linked list
 
-
 typedef struct re_list_struct{
 
 	unsigned id;
@@ -222,7 +213,6 @@ typedef struct re_list_struct{
 
 }re_list_t;
 
-
 //main data structure for reverse execution 
 typedef struct re_struct{
 	//which instruction id is being processed
@@ -236,9 +226,9 @@ typedef struct re_struct{
 	jmp_buf aliasret;
 
 	//the list of instructions
-	x86_insn_t * instlist; 
+	cs_insn *instlist; 
 	//the data loaded from core dump
-	coredata_t * coredata; 
+	coredata_t *coredata; 
 
 	//head of the core list
 	re_list_t head; 
@@ -253,14 +243,12 @@ typedef struct re_struct{
 	bool resolving;	
 
 	//the operand that leads to the crash, as the starting point for taint analysis 
-	x86_op_t* root;
+	cs_x86_op* root;
 
-#ifdef DATA_LOGGED
 	//the list about log
 	opval_list_t oplog_list; 
-#endif
 
-//set up the constraint context and solver using Z3
+	//set up the constraint context and solver using Z3
 #ifdef WITH_SOLVER
 	Z3_context zctx;
 	Z3_solver solver;	
@@ -279,7 +267,7 @@ typedef struct re_struct{
 extern re_t re_ds;
 
 unsigned long reverse_instructions();
-
+/*
 re_list_t * add_new_inst(unsigned index);
 
 re_list_t * add_new_define(x86_op_t * opd);
@@ -410,6 +398,5 @@ re_list_t *get_entry_by_inst_id(unsigned inst_index);
 #ifdef FIX_OPTM
 void fix_optimization(re_list_t* inst);
 #endif
-
-
+*/
 #endif

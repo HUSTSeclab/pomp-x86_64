@@ -6,10 +6,10 @@
 
 #include "global.h"
 #include "reverse_log.h"
+#include "inst_data.h"
 /*
 #include "reverse_instructions.h"
 #include "reverse_exe.h"
-#include "inst_data.h"
 */
 
 #ifdef WITH_SOLVER
@@ -26,7 +26,6 @@ int main(int argc, char *argv[]){
 	elf_core_info *core_info;
 	elf_binary_info *binary_info;
 	coredata_t *coredata;
-	x86_insn_t *rawinstlist;
 
 //	size_t lognum;
 //	operand_val_t *oploglist;
@@ -63,14 +62,13 @@ int main(int argc, char *argv[]){
 		LOG(stderr,"ERROR: The binary file is not parsed correctly");
 		exit(1);
    	}
-/*
+
 	//load data from core dump, including registers and memory
 	coredata = load_coredump(core_info, binary_info);
 	if (!coredata) {
 		LOG(stderr,"ERROR: Cannot load data from core dump");
 		exit(1);
    	}
-	print_registers(coredata);
 
 	//load all the instructions in a reversed manner
 	instnum = countvalidaddress(get_inst_path());
@@ -78,7 +76,7 @@ int main(int argc, char *argv[]){
 		LOG(stderr, "ERROR: read file error when counting linenum\n");
 		exit(1);
 	}
-
+/*
 	rawinstlist = (x86_insn_t *)malloc(instnum * sizeof(x86_insn_t));
 	if (!rawinstlist){
 		LOG(stderr, "ERROR: malloc error in main\n");
@@ -128,7 +126,7 @@ int main(int argc, char *argv[]){
 	re_ds.oplog_list.opval_list = oploglist;
 
 #ifdef WITH_SOLVER
-//initialize the constraint sover
+	//initialize the constraint sover
 	re_ds.zctx = Z3_mk_context(Z3_mk_config());
 	re_ds.solver = Z3_mk_solver(re_ds.zctx);
 	Z3_solver_inc_ref(re_ds.zctx, re_ds.solver);

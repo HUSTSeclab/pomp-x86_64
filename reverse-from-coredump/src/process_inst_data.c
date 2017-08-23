@@ -2,23 +2,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
+#include "global.h"
 #include "access_memory.h"
 #include "elf_core.h"
 #include "elf_binary.h"
-#include "insthandler.h"
+//#include "insthandler.h"
 #include "disassemble.h"
 #include "thread_selection.h"
 #include "inst_data.h"
+#include "reverse_exe.h"
+#include "reverse_log.h"
 
 // Collect data, like register, memory, base address for gs selector
 coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_info){
-
 	int index, segindex, threadnum;
 	int offset = 0;
 	coredata_t * coredata;
 
-
-//initialize coredata
+	//initialize coredata
 	coredata = (coredata_t * )malloc(sizeof(coredata_t));
 	if(!coredata)
 		return NULL;
@@ -33,7 +35,7 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 	memset(coredata->coremem, 0, core_info->phdr_num * sizeof(memseg_t));
 
 	segindex = 0;
-//copy memory from core dump or mapped file into coredata
+	//copy memory from core dump or mapped file into coredata
 	for(index = 0; index < core_info->phdr_num; index++){
 
 		if (!(core_info->phdr[index].p_type & PT_LOAD))
@@ -75,11 +77,11 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 
 	coredata->memsegnum = segindex;
 
-
 	re_ds.root = NULL;
 
-//take care of registers, including xmm and gs
+	//take care of registers, including xmm and gs
 	threadnum = select_thread(core_info, binary_info);
+/*
 	if(re_ds.root){
 		print_operand(*re_ds.root);
 	}
@@ -101,6 +103,7 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 		core_info->note_info->core_thread.lts[threadnum].lts_info[0].base;
 
 	return coredata;
+*/
 }
 
 #define LOG_MAX_SIZE 256
@@ -152,12 +155,9 @@ static void process_log_line(char* line, operand_val_t * oplog){
 
 
 unsigned long load_log(char* log_path, operand_val_t *oploglist){
-
 	unsigned index;
 	char log_buf[LOG_MAX_SIZE];
-
 	FILE* file;
-
 
 	if((file = fopen(log_path, "r")) == NULL){
 		LOG(stderr, "ERROR: Cannot open file for log data\n");
@@ -165,7 +165,6 @@ unsigned long load_log(char* log_path, operand_val_t *oploglist){
 	}
 
 	index = 0;
-
 
 	memset(log_buf, 0, LOG_MAX_SIZE);
 
@@ -185,58 +184,59 @@ unsigned long load_log(char* log_path, operand_val_t *oploglist){
 }
 
 
+/*
 unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info, char *trace_file, x86_insn_t *instlist){
 
-    char line[ADDRESS_SIZE + 2];
-    int offset = 0;
-    char inst_buf[INST_LEN];
-    unsigned long i;
-    FILE *file;
-    x86_insn_t inst;
-    Elf32_Addr address;
+	char line[ADDRESS_SIZE + 2];
+	int offset = 0;
+	char inst_buf[INST_LEN];
+	unsigned long i;
+	FILE *file;
+	x86_insn_t inst;
+	Elf32_Addr address;
 
-    if ((file = fopen(trace_file, "r" )) == NULL){
-        LOG(stderr, "ERROR: trace file open error\n");
-        return -1;
-    }
+	if ((file = fopen(trace_file, "r" )) == NULL){
+		LOG(stderr, "ERROR: trace file open error\n");
+		return -1;
+	}
 
-    i = 0;
+	i = 0;
 
-    while (fgets(line, sizeof(line), file) != NULL) {
-        // need to check the result of strtoll instead of strncmp
-        if (strncmp(line, "[disabled]", 10) == 0) continue;
-        if (strncmp(line, "[enabled]", 9) == 0) continue;
-        if (strncmp(line, "[resumed]", 9) == 0) continue;
+	while (fgets(line, sizeof(line), file) != NULL) {
+		// need to check the result of strtoll instead of strncmp
+		if (strncmp(line, "[disabled]", 10) == 0) continue;
+		if (strncmp(line, "[enabled]", 9) == 0) continue;
+		if (strncmp(line, "[resumed]", 9) == 0) continue;
 
-        // strtol return unsigned long.
-        // So if input is bigger than 0x80000000, it will return 0x7fffffff
-        address = (Elf32_Addr)strtoll(line, NULL, 16);
+		// strtol return unsigned long.
+		// So if input is bigger than 0x80000000, it will return 0x7fffffff
+		address = (Elf32_Addr)strtoll(line, NULL, 16);
 
-	printf("The address of the current instruction is %s or %x\n", line, address);
+		printf("The address of the current instruction is %s or %x\n", line, address);
 
-        offset = get_offset_from_address(core_info, address);
+		offset = get_offset_from_address(core_info, address);
 
-        if (offset == ME_NMAP || offset == ME_NMEM) {
-            LOG(stderr, "ERROR: The offset of this pc cannot be obtained\n");
-            return -1;
-        }
+		if (offset == ME_NMAP || offset == ME_NMEM) {
+			LOG(stderr, "ERROR: The offset of this pc cannot be obtained\n");
+			return -1;
+		}
 
-        if (offset == ME_NDUMP) {
-            if((get_data_from_specified_file(core_info, binary_info, address, inst_buf, INST_LEN)) < 0)
-                return -1;
-        }
+		if (offset == ME_NDUMP) {
+			if((get_data_from_specified_file(core_info, binary_info, address, inst_buf, INST_LEN)) < 0)
+				return -1;
+		}
 
-        if (offset >= 0)
-            get_data_from_core((Elf32_Addr)offset, INST_LEN, inst_buf);
+		if (offset >= 0)
+			get_data_from_core((Elf32_Addr)offset, INST_LEN, inst_buf);
 
-        if (disasm_one_inst(inst_buf, INST_LEN, 0, instlist + i) < 0) {
-            LOG(stderr, "ERROR: The PC points to an error position\n");
-            return -1;
-        }
+		if (disasm_one_inst(inst_buf, INST_LEN, 0, instlist + i) < 0) {
+			LOG(stderr, "ERROR: The PC points to an error position\n");
+			return -1;
+		}
 
-	instlist[i++].addr = address;
-    }
-    return i;
+		instlist[i++].addr = address;
+	}
+	return i;
 }
 
 void destroy_instlist(x86_insn_t * instlist){
@@ -263,6 +263,6 @@ bool verify_useless_inst(x86_insn_t *inst) {
 		if (strcmp(inst->mnemonic, useless_inst[i]) == 0)
 			return true;
 	}
-        return false;
+	return false;
 }
-
+*/

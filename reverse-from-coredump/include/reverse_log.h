@@ -1,8 +1,6 @@
 #ifndef __REVERSE_LOG__
 #define __REVERSE_LOG__
 
-#include <libdis.h>
-
 #include "reverse_exe.h"
 
 
@@ -12,7 +10,7 @@
 #define LOG(...)
 #endif
 
-
+/*
 void log_instructions(x86_insn_t *instlist, unsigned instnum);
 
 void print_reg(x86_reg_t reg);
@@ -50,4 +48,5 @@ void print_defnode(def_node_t *defnode);
 void print_instnode(inst_node_t *instnode);
 
 void print_node(re_list_t *node);
+*/
 #endif

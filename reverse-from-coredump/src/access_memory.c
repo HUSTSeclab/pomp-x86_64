@@ -156,38 +156,38 @@ off_t get_offset_from_address(elf_core_info* core_info, Elf32_Addr address){
 }
 
 int get_data_from_core(long int start, long int size, char * note_data){
-    int fd;
-    if ((fd=open(core_path, O_RDONLY, 0)) < 0){
-    	LOG(stderr, "Core file open error %s\n", strerror(errno));
-    	return -1;
-    }
-    if(lseek(fd, start, SEEK_SET)<0){
-    	LOG(stderr, "Core file lseek error %s\n", strerror(errno));
-    	close(fd);
-    	return -1;
-    }
-    if(read(fd, note_data, size)<0){
-    	LOG(stderr, "Core file open error %s\n", strerror(errno));
-    	close(fd);
-    	return -1;
-    }
-    close(fd);
-    return 0;
+	int fd;
+	if ((fd=open(get_core_path(), O_RDONLY, 0)) < 0){
+		LOG(stderr, "Core file open error %s\n", strerror(errno));
+		return -1;
+	}
+	if(lseek(fd, start, SEEK_SET)<0){
+		LOG(stderr, "Core file lseek error %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+	if(read(fd, note_data, size)<0){
+		LOG(stderr, "Core file open error %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+	close(fd);
+	return 0;
 }
 
 //determine if the address is executable.
 int address_executable(elf_core_info* core_info, Elf32_Addr address){
 	int segment;
-	if((segment = address_segment(core_info, address))<0)
+	if((segment = address_segment(core_info, address)) < 0)
 		return 0;
-	return (core_info->phdr[segment].p_flags & PF_X) ? 1:0;
+	return (core_info->phdr[segment].p_flags & PF_X) ? 1 : 0;
 }
 
 int address_writable(elf_core_info* core_info, Elf32_Addr address){
-        int segment;
-        if((segment = address_segment(core_info, address))<0)
-                return 0;
-        return (core_info->phdr[segment].p_flags & PF_W) ? 1:0;
+	int segment;
+	if((segment = address_segment(core_info, address)) < 0)
+		return 0;
+	return (core_info->phdr[segment].p_flags & PF_W) ? 1 : 0;
 }
 
 int addr_in_segment(GElf_Phdr phdr, Elf32_Addr addr){
@@ -210,10 +210,10 @@ int get_data_from_specified_file(elf_core_info *core_info, elf_binary_info *bin_
 
 	for(i = 0; i<bin_info->bin_lib_num; i++){
 		if(bin_info->binary_info_set[i].parsed)
-    		if(address >= bin_info->binary_info_set[i].base_address && address < bin_info->binary_info_set[i].end_address){
-			    file_num = i;
-			    break;
-		    }
+			if(address >= bin_info->binary_info_set[i].base_address && address < bin_info->binary_info_set[i].end_address){
+				file_num = i;
+				break;
+			}
 	}
 	if(file_num == -1)
 		goto out;
@@ -230,22 +230,23 @@ int get_data_from_specified_file(elf_core_info *core_info, elf_binary_info *bin_
 			break;
 		}
 	}
+
 	if(phdr_num == -1)
 		goto out;
 
 	//LOG(stdout, "DEBUG: the file mapped to address 0x%lx is %s\n", address, file_path);
-	offset = (address-reduce) - target_file->phdr[phdr_num].p_vaddr +  target_file->phdr[phdr_num].p_offset;
+	offset = (address-reduce)-target_file->phdr[phdr_num].p_vaddr+target_file->phdr[phdr_num].p_offset;
 
-	if (( fd = open ( file_path , O_RDONLY , 0)) < 0){
+	if ((fd = open(file_path, O_RDONLY, 0)) < 0){
 		LOG(stderr, "Core file open error %s\n", strerror(errno));
 		return -1;
 	}
-	if(lseek(fd, offset, SEEK_SET)<0){
+	if(lseek(fd, offset, SEEK_SET) < 0){
 		LOG(stderr, "Core file lseek error %s\n", strerror(errno));
 		close(fd);
 		return -1;
 	}
-    if(read(fd, buf, buf_size)<0){
+	if(read(fd, buf, buf_size) < 0){
 		LOG(stderr, "Core file open error %s\n", strerror(errno));
 		close(fd);
 		return -1;
