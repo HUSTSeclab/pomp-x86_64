@@ -9,6 +9,7 @@ typedef struct individual_binary_info_struct{
 	int parsed;
 	size_t phdr_num;
 	GElf_Phdr *phdr;
+	// note architecture
 	Elf32_Addr base_address;
 	Elf32_Addr end_address;
 }individual_binary_info;

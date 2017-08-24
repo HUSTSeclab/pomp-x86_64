@@ -21,11 +21,11 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 	coredata_t * coredata;
 
 	//initialize coredata
-	coredata = (coredata_t * )malloc(sizeof(coredata_t));
+	coredata = (coredata_t *)malloc(sizeof(coredata_t));
 	if(!coredata)
 		return NULL;
 
-	coredata->coremem = (memseg_t*) malloc(core_info->phdr_num * sizeof(memseg_t));
+	coredata->coremem = (memseg_t *) malloc(core_info->phdr_num * sizeof(memseg_t));
 
 	if(!coredata->coremem){
 		free(coredata);
@@ -157,7 +157,7 @@ static void process_log_line(char* line, operand_val_t * oplog){
 }
 
 
-unsigned long load_log(char* log_path, operand_val_t *oploglist){
+unsigned long load_log(char *log_path, operand_val_t *oploglist){
 	unsigned index;
 	char log_buf[LOG_MAX_SIZE];
 	FILE* file;
@@ -187,7 +187,7 @@ unsigned long load_log(char* log_path, operand_val_t *oploglist){
 }
 
 
-unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info, char *trace_file, cs_insn *instlist){
+unsigned long load_trace(elf_core_info *core_info, elf_binary_info *binary_info, char *trace_file, cs_insn *instlist){
 
 	char line[ADDRESS_SIZE + 2];
 	int offset = 0;
@@ -214,7 +214,7 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
 		// So if input is bigger than 0x80000000, it will return 0x7fffffff
 		address = (Elf32_Addr)strtoll(line, NULL, 16);
 
-		printf("The address of the current instruction is %x\n", address);
+		printf("The address of the current instruction is 0x%x\n", address);
 
 		offset = get_offset_from_address(core_info, address);
 
@@ -231,7 +231,7 @@ unsigned long load_trace(elf_core_info* core_info, elf_binary_info * binary_info
 		if (offset >= 0)
 			get_data_from_core((Elf32_Addr)offset, INST_LEN, inst_buf);
 
-		if (disasm_one_inst(inst_buf, INST_LEN, 0, instlist + i) < 0) {
+		if (disasm_one_inst(inst_buf, INST_LEN, address, instlist + i) < 0) {
 			LOG(stderr, "ERROR: The PC points to an error position\n");
 			return -1;
 		}

@@ -110,7 +110,7 @@ int pc_legal_access(elf_core_info* core_info, elf_binary_info *bin_info, struct 
 	if (offset >= 0)
 		get_data_from_core((Elf32_Addr)offset, INST_LEN, inst_buf);
 
-	if (disasm_one_inst(inst_buf, INST_LEN, 0, &inst) < 0){
+	if (disasm_one_inst(inst_buf, INST_LEN, address, &inst) < 0){
 		LOG(stdout, "DEBUG: The PC points to an error position\n");
 		return 0;
 	}

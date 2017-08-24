@@ -21,7 +21,6 @@ static void print_insn_detail(csh ud, cs_mode mode, cs_insn *ins);
 
 // user-provided memory space for cs_insn
 bool disasm_one_inst(char *buf, size_t buf_size, int pos, cs_insn *inst){
-	uint64_t address = 0x0;
 	cs_insn *insn;
 	size_t count;
 	int retval;
@@ -33,11 +32,11 @@ bool disasm_one_inst(char *buf, size_t buf_size, int pos, cs_insn *inst){
 
 	cs_option(handle, CS_OPT_DETAIL, CS_OPT_ON);
 
-	count = cs_disasm(handle, buf, buf_size, address, 0, &insn);
+	count = cs_disasm(handle, buf, buf_size, pos, 0, &insn);
 
 	if (count) {
 		memcpy(inst, insn, sizeof(cs_insn));
-		LOG(stdout, "0x%" PRIx64 ":\t%s\t%s\n", inst->address, inst->mnemonic, inst->op_str);
+		LOG(stdout, "0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
 		//print_insn_detail(handle, platform.mode, inst);
 		cs_free(insn, count);
 	} else {
