@@ -13,5 +13,4 @@ typedef struct platform {
 } re_platform_t;
 
 bool disasm_one_inst(char *buf, size_t buf_size, int pos, cs_insn *inst);
-
 #endif

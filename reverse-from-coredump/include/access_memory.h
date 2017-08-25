@@ -20,5 +20,4 @@ int address_executable(elf_core_info *core_info, Elf32_Addr address);
 int address_writable(elf_core_info *core_info, Elf32_Addr address);
 
 int get_data_from_specified_file(elf_core_info *core_info, elf_binary_info *bin_info, Elf32_Addr address, char *buf, size_t buf_size);
-
 #endif

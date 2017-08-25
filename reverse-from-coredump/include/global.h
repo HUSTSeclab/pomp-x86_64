@@ -41,5 +41,4 @@ char * get_xmm_path(void);
 extern char * sum_path;
 void set_sum_path(char* path);
 #endif
-
 #endif

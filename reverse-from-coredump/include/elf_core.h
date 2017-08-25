@@ -66,11 +66,4 @@ typedef struct core_info_struct{
 int destroy_core_info(elf_core_info *coreinfo);
 
 elf_core_info *parse_core(char *path);
-
-int process_segment(Elf *elf, elf_core_info *coreinfo);
-
-int process_note_segment(Elf *elf, elf_core_info *coreinfo);
-
-void print_elf_type(Elf_Kind ek);
-
 #endif

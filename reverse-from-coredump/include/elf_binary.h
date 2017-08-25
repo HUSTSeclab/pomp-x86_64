@@ -23,5 +23,4 @@ typedef struct elf_binary_info_struct{
 elf_binary_info *parse_binary(elf_core_info *core_info);
 
 int destroy_bin_info(elf_binary_info *bin_info);
-
 #endif

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+
 #include "reverse_log.h"
 
 unsigned long countvalidaddress(char *filename){

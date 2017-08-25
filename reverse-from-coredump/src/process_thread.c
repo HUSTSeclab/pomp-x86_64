@@ -3,10 +3,9 @@
 #include "disassemble.h"
 #include "thread_selection.h"
 #include "reverse_log.h"
-//#include "insthandler.h"
 
 // verify the current instruction is executable
-int pc_executable(elf_core_info* core_info, struct elf_prstatus thread){
+static int pc_executable(elf_core_info* core_info, struct elf_prstatus thread){
        int exec = 1;
        Elf32_Addr address; 
        address = thread.pr_reg[EIP]; 
@@ -19,7 +18,7 @@ int pc_executable(elf_core_info* core_info, struct elf_prstatus thread){
 
 
 // verify whether one operand is legal access
-int single_op_legal_access(cs_insn *insn, cs_x86_op *op, struct elf_prstatus thread, elf_core_info *core_info){
+static int single_op_legal_access(cs_insn *insn, cs_x86_op *op, struct elf_prstatus thread, elf_core_info *core_info){
 	// according to index/base register and rw property of operand,
 	// identify one operand is legal or not
 	int legal = 1;
@@ -46,7 +45,7 @@ int single_op_legal_access(cs_insn *insn, cs_x86_op *op, struct elf_prstatus thr
 
 
 // verify whether all the operands are legal access
-int op_legal_access(cs_insn *inst, struct elf_prstatus thread, elf_core_info* core_info){
+static int op_legal_access(cs_insn *inst, struct elf_prstatus thread, elf_core_info* core_info){
 	int count, i;
 	cs_x86 *x86;
 	cs_x86_op *op;
@@ -69,7 +68,7 @@ int op_legal_access(cs_insn *inst, struct elf_prstatus thread, elf_core_info* co
 
 // according to instruction type, add essential implicit operand
 // if the libdisassembler does not provide
-void add_essential_implicit_operand(cs_insn *inst) {
+static void add_essential_implicit_operand(cs_insn *inst) {
 /*
 	// for example, add [esp] operand to push instruction;
 	x86_op_t espmem;
@@ -86,7 +85,7 @@ void add_essential_implicit_operand(cs_insn *inst) {
 }
 
 // verify whether the current instruction is legal access
-int pc_legal_access(elf_core_info* core_info, elf_binary_info *bin_info, struct elf_prstatus thread){
+static int pc_legal_access(elf_core_info* core_info, elf_binary_info *bin_info, struct elf_prstatus thread){
 	int legal_access;
 	Elf32_Addr address;
 	int offset;
@@ -126,7 +125,7 @@ int pc_legal_access(elf_core_info* core_info, elf_binary_info *bin_info, struct 
 }
 
 // verify whether one thread crashes
-int is_thread_crash(elf_core_info* core_info, elf_binary_info* bin_info, struct elf_prstatus thread){
+static int is_thread_crash(elf_core_info* core_info, elf_binary_info* bin_info, struct elf_prstatus thread){
 	int crash  = 0;
 
 	if (!pc_executable(core_info, thread)){

@@ -35,8 +35,8 @@ void print_elf_type(Elf_Kind ek){
 }
 
 // destroy core_note_info structure inside core_info
-int destryp_note_info(core_note_info *note_info){
-	if (note_info->core_file.file_info){
+static int destroy_note_info(core_note_info *note_info){
+ 	if (note_info->core_file.file_info){
 		free(note_info->core_file.file_info);
 		note_info->core_file.file_info = NULL;
 	}
@@ -69,7 +69,7 @@ int destryp_note_info(core_note_info *note_info){
 // destroy elf_core_info structure
 int destroy_core_info(elf_core_info *core_info){
 	if (core_info && core_info->note_info){
-		destryp_note_info(core_info->note_info);
+		destroy_note_info(core_info->note_info);
 	}
 
 	if (core_info && core_info->phdr){
@@ -85,7 +85,7 @@ int destroy_core_info(elf_core_info *core_info){
 }
 
 // process all the note entries
-int process_note_info(elf_core_info *core_info, char *note_data, unsigned int size){
+static int process_note_info(elf_core_info *core_info, char *note_data, unsigned int size){
 	size_t thread_num = 0;
 	size_t nt_file_num = 0;
 
@@ -239,7 +239,7 @@ int process_note_info(elf_core_info *core_info, char *note_data, unsigned int si
 }
 
 // process note segment in program header table
-int process_note_segment(Elf* elf, elf_core_info* core_info){
+static int process_note_segment(Elf* elf, elf_core_info* core_info){
 	unsigned int i;
 	unsigned long start, size;
 	size_t phdr_num = 0;
@@ -279,7 +279,7 @@ int process_note_segment(Elf* elf, elf_core_info* core_info){
 }
 
 // get all the segments in the core dump
-int process_segment(Elf* elf, elf_core_info* core_info){
+static int process_segment(Elf* elf, elf_core_info* core_info){
 	size_t phdr_num = 0;
 	GElf_Phdr phdr;
 	unsigned int i;

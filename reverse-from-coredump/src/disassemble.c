@@ -15,7 +15,7 @@ static re_platform_t platform = {
 
 csh handle;
 
-
+// modified from capstone demo examples
 static void print_string_hex(char *comment, unsigned char *str, size_t len);
 static void print_insn_detail(csh ud, cs_mode mode, cs_insn *ins);
 

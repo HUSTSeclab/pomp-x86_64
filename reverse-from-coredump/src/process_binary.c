@@ -13,17 +13,17 @@
 #include "reverse_log.h"
 
 // destroy all the individual binary info structure
-int destroy_binary_set(elf_binary_info * bin_info){
+static int destroy_binary_set(elf_binary_info * bin_info){
 	int i; 
 	for (i=0; i< bin_info->bin_lib_num; i++){
 		if (bin_info->binary_info_set[i].phdr){
 			free(bin_info->binary_info_set[i].phdr);
-			bin_info->binary_info_set[i].phdr=NULL;
-		}
+ 			bin_info->binary_info_set[i].phdr=NULL;
+ 		}
 	}
 	free(bin_info->binary_info_set);
 	bin_info->binary_info_set = NULL;
-	return 0;
+ 	return 0;
 }
 
 // destroy elf_binary_info structure
@@ -33,14 +33,14 @@ int destroy_bin_info(elf_binary_info * bin_info){
 	}
 	if (bin_info){
 		free(bin_info);
-		bin_info = NULL;
+ 		bin_info = NULL;
 	}
-	return 0;
+ 	return 0;
 }
 
 // process all the binary files mapped by the core file,
 // including the binary and the dynamic libraries
-int count_bin_file_num(core_nt_file_info nt_file_info){
+static int count_bin_file_num(core_nt_file_info nt_file_info){
 	int num = 0;
 	int i = 0;
 	char *prev_name, *next_name;
@@ -62,7 +62,7 @@ int count_bin_file_num(core_nt_file_info nt_file_info){
 }
 
 // get program header of binary file
-int get_header_from_binary(char * path, individual_binary_info* bin_info){
+static int get_header_from_binary(char * path, individual_binary_info* bin_info){
 	int fd;
 	GElf_Phdr phdr;  	
 	Elf* elf;
@@ -110,7 +110,7 @@ int get_header_from_binary(char * path, individual_binary_info* bin_info){
 }
 
 // process one binary file
-int process_one_bin_file(char* bin_name, individual_binary_info* bin_info){
+static int process_one_bin_file(char* bin_name, individual_binary_info* bin_info){
 	int success=1;
 	char full_path[FILE_NAME_SIZE]; 
 	LOG(stdout, "STATE: Processing Binary File - %s \n", bin_name);	
@@ -145,7 +145,7 @@ out:
 	return success; 
 }
 
-Elf32_Addr file_start_address(core_nt_file_info nt_file_info, char * name, Elf32_Addr min){
+static Elf32_Addr file_start_address(core_nt_file_info nt_file_info, char * name, Elf32_Addr min){
 	Elf32_Addr min_start = min;
 	int i;
 	for (i=0; i<nt_file_info.nt_file_num; i++){
@@ -156,7 +156,7 @@ Elf32_Addr file_start_address(core_nt_file_info nt_file_info, char * name, Elf32
 	return min_start;
 }
 
-Elf32_Addr file_end_address(core_nt_file_info nt_file_info, char *name){
+static Elf32_Addr file_end_address(core_nt_file_info nt_file_info, char *name){
 	Elf32_Addr max_end = 0;
 	int i;
 	for (i=0; i < nt_file_info.nt_file_num; i++){
@@ -168,7 +168,7 @@ Elf32_Addr file_end_address(core_nt_file_info nt_file_info, char *name){
 }
 
 // process all the binary files
-int process_bin_files(core_nt_file_info nt_file_info,individual_binary_info* binary_info_set){
+static int process_bin_files(core_nt_file_info nt_file_info,individual_binary_info* binary_info_set){
 	int i = 0;
 	int bin_num = 0;
 	char *prev_name, *next_name;
