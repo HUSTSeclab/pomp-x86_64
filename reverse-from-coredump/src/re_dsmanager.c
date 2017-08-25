@@ -3,15 +3,16 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+
 #include "global.h"
 #include "disassemble.h"
-#include "insthandler.h"
+//#include "insthandler.h"
 #include "reverse_exe.h"
-#include "inst_opd.h"
-#include "solver.h"
-#include "bin_alias.h"
+//#include "inst_opd.h"
+//#include "solver.h"
+//#include "bin_alias.h"
 
-
+#if 0
 re_list_t * find_next_def_of_def(re_list_t *def, int *type) __attribute__ ((alias("find_next_def_of_use")));
 
 re_list_t * find_prev_def_of_def(re_list_t *def, int *type) __attribute__ ((alias("find_prev_def_of_use")));
@@ -755,13 +756,14 @@ re_list_t * add_new_define(x86_op_t * opd){
 
 	return newnode;
 }
+#endif
 
 re_list_t * add_new_inst(unsigned index){
 
 	re_list_t * newnode;
 	inst_node_t * newinst;
 
-	newnode = (re_list_t *)malloc(sizeof(re_list_t ));
+	newnode = (re_list_t *)malloc(sizeof(re_list_t));
 
 	if(!newnode){
 		return NULL;
@@ -786,13 +788,15 @@ re_list_t * add_new_inst(unsigned index){
 	newnode->node_type = InstNode;
 	newnode->node = (void*)newinst;
 
-	funcid_of_inst(newnode);
+	//funcid_of_inst(newnode);
+
 	//insert new node into main list
 	list_add(&newnode->list, &re_ds.head.list);
 
 	return newnode;
 }
 
+#if 0
 void assign_def_before_value(re_list_t * def, valset_u val){
 
 	memcpy( &(CAST2_DEF(def->node)->beforeval),
@@ -805,7 +809,6 @@ void assign_def_before_value(re_list_t * def, valset_u val){
 	//do not perform correctness check when verifying alias
         if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
 	        correctness_check(find_inst_of_node(def));
-
 }
 
 void assign_def_after_value(re_list_t * def, valset_u val){
@@ -1991,21 +1994,6 @@ out:
 	}
 }
 
-
-int insttype_to_index(enum x86_insn_type type){
-
-	int index;
-	for(index = 0; index < ninst; index++){
-
-		if(opcode_index_tab[index].type == type){
-			return index;
-		}
-	}
-
-	return -1;
-}
-
-
 static bool use_after_def(re_list_t *use, int regid, re_list_t *def[], int ndef){
 
 	int defindex;
@@ -2741,3 +2729,4 @@ re_list_t *get_entry_by_inst_id(unsigned inst_index) {
 	}
 	return NULL;
 }
+#endif

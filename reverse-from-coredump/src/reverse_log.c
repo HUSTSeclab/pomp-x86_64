@@ -11,19 +11,18 @@
 #include "access_memory.h"
 #include "reverse_exe.h"
 
-
+/*
 void print_reg(x86_reg_t reg) {
 	LOG(stdout, "%s", reg.name);
 }
+*/
 
-
-void print_assembly(x86_insn_t *inst){
-	char debugline[MAX_INSN_STRING];
-	x86_format_insn(inst, debugline, MAX_INSN_STRING, intel_syntax);
-	LOG(stdout, "Current Instruction is %s.\n", debugline);
+void print_assembly(cs_insn *inst){
+	LOG(stdout, "Current Instruction is 0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
 }
 
 
+#if 0
 void print_operand(x86_op_t opd){
 	char debugopd[MAX_OP_STRING];
 	x86_format_operand(&opd, debugopd, MAX_OP_STRING, intel_syntax);
@@ -195,14 +194,14 @@ void print_usenode(use_node_t *usenode){
 		}
 	}
 }
-
+#endif
 
 void print_instnode(inst_node_t *instnode) {
 	LOG(stdout, "LOG: Inst Node with index %d and function ID %x\n", instnode->inst_index, instnode->funcid);
 	print_assembly(re_ds.instlist + instnode->inst_index);
 }
 
-
+#if 0
 void print_node(re_list_t *node){
 	LOG(stdout, "LOG: Node ID is %d\n", node->id);
 	switch (node->node_type) {
@@ -320,7 +319,7 @@ void print_corelist(re_list_t *re_list) {
 	LOG(stdout, "~~~~~~~~~~~~~~~~~~~~~~~End of Core List~~~~~~~~~~~~~~~~~~~~~~~\n");
 
 }
-
+#endif
 
 // only print all the operands of the current instruction 
 void print_info_of_current_inst(re_list_t *inst){
@@ -328,6 +327,7 @@ void print_info_of_current_inst(re_list_t *inst){
 	LOG(stdout, "~~~~~~~~~~~~~~~~~~~Start of Current Inst Info~~~~~~~~~~~~~~~~~~~\n");
 	LOG(stdout, "LOG: Node ID is %d\n", inst->id);
 	print_instnode(inst->node);
+	/*
 	list_for_each_entry_reverse(entry, &inst->list, list) {
 		LOG(stdout, "=================================================\n");
 		if (entry == &re_ds.head) break;
@@ -342,10 +342,11 @@ void print_info_of_current_inst(re_list_t *inst){
 			print_usenode(CAST2_USE(entry->node));
 		}
 	}
+	*/
 	LOG(stdout, "~~~~~~~~~~~~~~~~~~~~End of Current Inst info~~~~~~~~~~~~~~~~~~~~\n");
 }
 
-
+#if 0
 // log all the instructions to one file called "instructions"
 void log_instructions(x86_insn_t *instlist, unsigned instnum){
 	FILE *file;
@@ -366,3 +367,4 @@ void print_maxfuncid() {
 	LOG(stdout, "Max Function ID is %d\n", maxfuncid());
 	LOG(stdout, "=================================================\n");
 }
+#endif

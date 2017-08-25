@@ -7,9 +7,9 @@
 #include "global.h"
 #include "reverse_log.h"
 #include "inst_data.h"
+#include "reverse_exe.h"
 /*
 #include "reverse_instructions.h"
-#include "reverse_exe.h"
 */
 
 #ifdef WITH_SOLVER
@@ -28,8 +28,8 @@ int main(int argc, char *argv[]){
 	coredata_t *coredata;
 	cs_insn *rawinstlist;
 
-//	size_t lognum;
-//	operand_val_t *oploglist;
+	size_t lognum;
+	operand_val_t *oploglist;
 
 	if (argc != 7){
 		LOG(stderr, "Help: %s coredump binary_path instruction_file log_file (optional) xmm_file (optional) summary_file\n", argv[0]);
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
 	log_instructions(rawinstlist, instnum);
 	return 0;
 #endif
-/*
+
 	lognum = countvalidlog(get_log_path());
 	if(lognum <= 0){
 		LOG(stderr, "Warning: There is no valid log\n");
@@ -134,15 +134,14 @@ int main(int argc, char *argv[]){
 #endif
 
 #ifdef BIN_ALIAS
-	init_bin_alias();
+	//init_bin_alias();
 	//this is for optimization
 	//should adjust the code location later
-	re_ds.atroot = NULL;
+	//re_ds.atroot = NULL;
 //	memset(re_ds.flist, 0, MAXFUNC * sizeof(func_info_t));
 #endif
 
 	reverse_instructions();
-*/
 
 	//do some cleanup here
 	destroy_instlist(rawinstlist);

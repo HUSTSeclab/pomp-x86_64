@@ -1,11 +1,21 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <capstone/capstone.h>
+
 #include "global.h"
 #include "disassemble.h"
-#include "insthandler.h"
 #include "reverse_exe.h"
+#include "insthandler.h"
 
+
+op_index_pair_t opcode_index_tab[]={
+	{X86_INS_INVALID, 0}
+};
+
+const int ninst = sizeof(opcode_index_tab) / sizeof (op_index_pair_t);
+
+#if 0
 #define insn_systems 0xE000
 
 
@@ -121,7 +131,6 @@ op_index_pair_t opcode_index_tab[]={
         //insn_bcdconv
 };
 
-const int ninst = sizeof(opcode_index_tab) / sizeof (op_index_pair_t);
 
 resolver_func inst_resolver[] = {
 	/* insn_controlflow */
@@ -347,5 +356,17 @@ post_resolve_heuristic_func post_resolve_heuristics[] = {
         //&pminub_resolver,
         //&movaps_resolver
 };
+#endif
 
+int insttype_to_index(enum x86_insn type){
 
+	int index;
+	for(index = 0; index < ninst; index++){
+
+		if(opcode_index_tab[index].type == type){
+			return index;
+		}
+	}
+
+	return -1;
+}

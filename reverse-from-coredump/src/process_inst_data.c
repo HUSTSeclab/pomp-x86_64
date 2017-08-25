@@ -251,10 +251,10 @@ static char *useless_inst[] = {
 	"prefetcht0",
 	"lfence"
 };
-/*
+
 #define NUINST (sizeof(useless_inst)/sizeof(char *))
 
-bool verify_useless_inst(x86_insn_t *inst) {
+bool verify_useless_inst(cs_insn *inst) {
 	int i;
 
 	if (!inst) {
@@ -267,4 +267,3 @@ bool verify_useless_inst(x86_insn_t *inst) {
 	}
 	return false;
 }
-*/

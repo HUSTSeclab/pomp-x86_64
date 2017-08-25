@@ -267,9 +267,9 @@ typedef struct re_struct{
 extern re_t re_ds;
 
 unsigned long reverse_instructions();
-/*
-re_list_t * add_new_inst(unsigned index);
 
+re_list_t * add_new_inst(unsigned index);
+/*
 re_list_t * add_new_define(x86_op_t * opd);
 
 re_list_t * add_new_use(x86_op_t * opd, enum u_type type);

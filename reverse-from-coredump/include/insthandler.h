@@ -5,17 +5,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
 #include "disassemble.h"
 #include "global.h"
 #include "access_memory.h"
 #include "reverse_log.h"
 #include "reverse_exe.h"
-#include "inst_opd.h"
-#include "re_alias.h"
-#include "heuristics.h"
+//#include "inst_opd.h"
+//#include "re_alias.h"
+//#include "heuristics.h"
 
 typedef struct op_index_pair{
-	enum x86_insn_type type;
+	enum x86_insn type;
 	int index;
 }op_index_pair_t;
 
@@ -39,7 +40,7 @@ extern esp_resolve_func esp_resolver[];
 
 extern post_resolve_heuristic_func post_resolve_heuristics[];
 
-int translate_datatype_to_byte(enum x86_op_datatype datatype);
+//int translate_datatype_to_byte(enum x86_op_datatype datatype);
 
 #define INIT_ESPMEM(espmem, op_type, op_datatype, op_access, espreg) \
 	memset((espmem), 0, sizeof(x86_op_t)); \
@@ -122,6 +123,7 @@ enum expreg_status {
 	Base_Index_Reg
 };
 
+/*
 static inline enum expreg_status get_expreg_status(x86_ea_t exp){
 	if ((exp.base.id != 0) && (exp.index.id != 0)) {
 		return Base_Index_Reg;
@@ -136,7 +138,7 @@ static inline enum expreg_status get_expreg_status(x86_ea_t exp){
 		return No_Reg;
 	}
 }
-
+*/
 
 enum operand_status {
 	dest_register_src_register = 1,
@@ -148,7 +150,7 @@ enum operand_status {
 	dest_register_src_imm
 };
 
-
+/*
 static inline enum operand_status get_operand_combine(x86_insn_t *inst) {
 	x86_op_t *dst = x86_get_dest_operand(inst);
 	x86_op_t *src = x86_get_src_operand(inst);
@@ -162,7 +164,7 @@ static inline enum operand_status get_operand_combine(x86_insn_t *inst) {
 	if (reg1_imm2(dst, src)) return dest_register_src_imm;
 	assert(0);
 }
-
+*/
 
 
 // instruction handlers

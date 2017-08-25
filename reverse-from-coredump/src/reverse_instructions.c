@@ -3,11 +3,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+
 #include "global.h"
 #include "disassemble.h"
-#include "insthandler.h"
 #include "reverse_exe.h"
-#include "analyze_result.h"
+#include "reverse_log.h"
+
+//#include "insthandler.h"
+//#include "analyze_result.h"
 
 unsigned long reverse_instructions(void){
 
@@ -35,16 +38,16 @@ unsigned long reverse_instructions(void){
 			assert(0);
 		}
 
-		
+		// print information about current instruction node	
 		print_instnode(curinst->node);
 
 		LOG(stdout, "\n------------------Start of one instruction analysis-----------------\n");
 
-		int handler_index = insttype_to_index(re_ds.instlist[index].type);
+		int handler_index = insttype_to_index(re_ds.instlist[index].id);
 		if (handler_index >= 0) {
-			inst_handler[handler_index](curinst);
+			//inst_handler[handler_index](curinst);
 		} else {
-			LOG(stdout, "instruction type %x\n", re_ds.instlist[index].type);
+			LOG(stdout, "instruction type %s\n", re_ds.instlist[index].mnemonic);
 			assert(0);
 		}
 
@@ -52,7 +55,7 @@ unsigned long reverse_instructions(void){
 		LOG(stdout, "------------------ End of one instruction analysis------------------\n");
 	}
 
-
+#if  0
 #ifdef BIN_ALIAS
 //make another assumption here
 //We assume the registers are recorded at the begining of the trace
@@ -137,9 +140,6 @@ unsigned long reverse_instructions(void){
 
 		 if (entry->node_type == InstNode) {			
 
-			if(entry->id == 64648)
-				printf("Target hit\n");
-
 			re_ds.curinstid = entry->id;
 #ifdef  FIX_OPTM
                         fix_optimization(entry);
@@ -155,6 +155,7 @@ unsigned long reverse_instructions(void){
 
 	LOG(stdout, "Max Function Id is %d\n", maxfuncid());
 	destroy_corelist();
+#endif
 
 	return 0;    
 }

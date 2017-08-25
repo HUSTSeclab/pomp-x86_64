@@ -34,8 +34,8 @@ unsigned long load_trace(elf_core_info *core_info, elf_binary_info *binary_info,
 
 coredata_t *load_coredump(elf_core_info *core_info, elf_binary_info *binary_info);
 
-//bool verify_useless_inst(x86_insn_t *inst);
+bool verify_useless_inst(cs_insn *inst);
 
-//void destroy_instlist(x86_insn_t * instlist);
+void destroy_instlist(cs_insn * instlist);
 
 #endif
