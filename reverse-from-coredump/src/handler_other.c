@@ -1,5 +1,6 @@
 #include "insthandler.h"
 
+#if 0
 #define PXOR 0x00
 #define MOVDQU 0x01
 #define PMOVMSKB 0x02
@@ -174,6 +175,7 @@ void unknown_resolver(re_list_t* instnode, re_list_t *re_deflist, re_list_t *re_
 			break;	
 	}
 }
+#endif
 
 void nop_handler(re_list_t * instnode){
 }

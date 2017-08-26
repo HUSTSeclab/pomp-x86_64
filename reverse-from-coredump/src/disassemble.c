@@ -7,7 +7,7 @@
 #include "disassemble.h"
 
 // note architecture
-static re_platform_t platform = {
+re_platform_t platform = {
 	CS_ARCH_X86,
 	CS_MODE_32,
 	"X86 32bit (ATT syntax)"
@@ -36,7 +36,7 @@ bool disasm_one_inst(char *buf, size_t buf_size, int pos, cs_insn *inst){
 
 	if (count) {
 		memcpy(inst, insn, sizeof(cs_insn));
-		LOG(stdout, "0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
+		//LOG(stdout, "0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
 		//print_insn_detail(handle, platform.mode, inst);
 		cs_free(insn, count);
 	} else {

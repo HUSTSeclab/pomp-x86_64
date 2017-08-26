@@ -8,8 +8,7 @@
 #include "disassemble.h"
 #include "reverse_exe.h"
 #include "reverse_log.h"
-
-//#include "insthandler.h"
+#include "insthandler.h"
 //#include "analyze_result.h"
 
 unsigned long reverse_instructions(void){
@@ -41,7 +40,7 @@ unsigned long reverse_instructions(void){
 		// print information about current instruction node	
 		print_instnode(curinst->node);
 
-		LOG(stdout, "\n------------------Start of one instruction analysis-----------------\n");
+		LOG(stdout, "------------------Start of one instruction analysis-----------------\n");
 
 		int handler_index = insttype_to_index(re_ds.instlist[index].id);
 		if (handler_index >= 0) {
@@ -52,7 +51,7 @@ unsigned long reverse_instructions(void){
 		}
 
 		print_info_of_current_inst(curinst);
-		LOG(stdout, "------------------ End of one instruction analysis------------------\n");
+		LOG(stdout, "------------------ End of one instruction analysis------------------\n\n");
 	}
 
 #if  0

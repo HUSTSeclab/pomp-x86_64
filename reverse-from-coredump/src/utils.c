@@ -39,6 +39,6 @@ unsigned long countvalidlog(char * filename){
 		linenum++;
 	}
 
-	LOG(stdout, "RESULT: Valid Address Number - 0x%lx\n", linenum);
+	LOG(stdout, "RESULT: Valid Log Number - 0x%lx\n", linenum);
 	return linenum;
 }

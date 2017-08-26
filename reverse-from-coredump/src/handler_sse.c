@@ -2,7 +2,7 @@
 #include "insthandler.h"
 #include "reverse_exe.h"
 
-
+/*
 void ptest_handler(re_list_t* instnode){
 	test_handler(instnode);
 }
@@ -10,9 +10,9 @@ void ptest_handler(re_list_t* instnode){
 void ptest_resolver(re_list_t* inst, re_list_t* deflist, re_list_t* uselist){
 	test_resolver(inst, deflist, uselist);
 }
-
+*/
 void pxor_handler(re_list_t* instnode){
-
+#if 0
 	x86_insn_t* inst;
 	x86_op_t *src, *dst;
 	re_list_t re_deflist, re_uselist, re_instlist;  	
@@ -71,19 +71,21 @@ void pxor_handler(re_list_t* instnode){
 	re_resolve(&re_deflist, &re_uselist, &re_instlist);
 
 	print_info_of_current_inst(instnode);
+#endif
 }
 
 void pxor_post_heuristics(re_list_t *instnode, re_list_t *instlist, re_list_t *uselist, re_list_t *deflist){
 
 //	if(list_empty(&re_ds.head.umemlist)){
 
-		val2addr_heuristics(uselist);	
+		//val2addr_heuristics(uselist);	
 //	}
 
 }
 
 
 void pxor_resolver(re_list_t* inst, re_list_t* deflist, re_list_t* uselist){
+/*
 	re_list_t *entry;
 	re_list_t *dst[NOPD], *src[NOPD];
 	int nuse, ndef, i;
@@ -167,13 +169,10 @@ void pxor_resolver(re_list_t* inst, re_list_t* deflist, re_list_t* uselist){
 			assert(vt.dqword[i] == vs1.dqword[i] ^ vs2.dqword[i]);
 		}
 	}
-
+i*/
 }
 
-
-
-
-
+#if 0
 void movdqu_handler(re_list_t * instnode){
 	mov_handler(instnode);
 }
@@ -708,3 +707,4 @@ void punpcklbw_resolver(re_list_t* inst, re_list_t *deflist, re_list_t *uselist)
 		add_to_deflist(dst[0], deflist);
 	}
 }
+#endif

@@ -11,39 +11,75 @@
 #include "access_memory.h"
 #include "reverse_exe.h"
 
-/*
-void print_reg(x86_reg_t reg) {
-	LOG(stdout, "%s", reg.name);
+
+void print_reg(x86_reg reg) {
+	if (reg == X86_REG_INVALID) {
+		LOG(stdout, "Reg = NULL");
+	} else {
+		LOG(stdout, "Reg = %s", cs_reg_name(handle, reg));
+	}
 }
-*/
 
 void print_assembly(cs_insn *inst){
+	if (!inst) return;
 	LOG(stdout, "Current Instruction is 0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
 }
 
+void print_operand(cs_x86_op opd){
+	LOG(stdout, "Information for operand: \n");
+	switch (RE_X86_OP_ACCESS(opd)) {
+	case CS_AC_READ:
+		LOG(stdout, "\toperand.access : Read\n");
+		break;
+	case CS_AC_WRITE:
+		LOG(stdout, "\toperand.access : Write\n");
+		break;
+	}
 
-#if 0
-void print_operand(x86_op_t opd){
-	char debugopd[MAX_OP_STRING];
-	x86_format_operand(&opd, debugopd, MAX_OP_STRING, intel_syntax);
-	LOG(stdout, "%s", debugopd);
+	switch(RE_X86_OP_TYPE(opd)) {
+	case X86_OP_INVALID:
+		LOG(stderr, "\t%s\n", "Invalid Operand Type");
+		break;
+	case X86_OP_REG:
+		LOG(stdout, "\t");
+		print_reg(RE_X86_REG_ID(opd));
+		LOG(stdout, "\n");
+		break;
+	case X86_OP_IMM:
+		LOG(stdout, "\t%x\n", (unsigned int)RE_X86_IMM_VALUE(opd));
+		break;
+	case X86_OP_MEM:
+		LOG(stdout, "\toperand.type: MEM\n");
+		LOG(stdout, "\toperand.segment: ");
+		print_reg(RE_X86_MEM_SEG(opd));
+		LOG(stdout, "\n");
+		LOG(stdout, "\toperand.mem.base: ");
+		print_reg(RE_X86_MEM_BASE(opd));
+		LOG(stdout, "\n");
+		LOG(stdout, "\toperand.mem.index ");
+		print_reg(RE_X86_MEM_INDEX(opd));
+		LOG(stdout, "\n");
+		LOG(stdout, "\toperand.mem.scale: %u\n", RE_X86_MEM_SCALE(opd));
+		LOG(stdout, "\toperand.mem.disp: %x\n", (int)RE_X86_MEM_DISP(opd));
+
+		break;
+	}
 }
-
 
 // print all the registers for one instruction
 void print_registers(coredata_t *coredata){
+    LOG(stdout, "DEBUG: EAX - 0x%lx\n", coredata->corereg.regs[EAX]);
     LOG(stdout, "DEBUG: EBX - 0x%lx\n", coredata->corereg.regs[EBX]);
     LOG(stdout, "DEBUG: ECX - 0x%lx\n", coredata->corereg.regs[ECX]);
     LOG(stdout, "DEBUG: EDX - 0x%lx\n", coredata->corereg.regs[EDX]);
     LOG(stdout, "DEBUG: ESI - 0x%lx\n", coredata->corereg.regs[ESI]);
     LOG(stdout, "DEBUG: EDI - 0x%lx\n", coredata->corereg.regs[EDI]);
     LOG(stdout, "DEBUG: EBP - 0x%lx\n", coredata->corereg.regs[EBP]);
-    LOG(stdout, "DEBUG: EAX - 0x%lx\n", coredata->corereg.regs[EAX]);
     LOG(stdout, "DEBUG: ESP - 0x%lx\n", coredata->corereg.regs[UESP]);
     LOG(stdout, "\n");
 }
 
-
+/*
 void print_operand_info(int opd_count, ...){
     va_list arg_ptr;
     x86_op_t *opd;
@@ -62,22 +98,13 @@ void print_operand_info(int opd_count, ...){
     }
     va_end(arg_ptr);
 }
+*/
 
-
-void print_all_operands(x86_insn_t *inst) {
-
-	LOG(stdout, "LOG: All operands num: %d\n", inst->operand_count);
-	LOG(stdout, "LOG: Explicit operands num: %d\n", inst->explicit_count);
-	
-	x86_oplist_t *temp;
-	for (temp=inst->operands;temp != NULL; temp=temp->next) {
-		LOG(stdout, "LOG: operand type is %d\n", temp->op.type);
-		print_operand(temp->op);
-		LOG(stdout, "\n");
-	}
+void print_all_operands(cs_insn *inst) {
 }
 
 
+#if 0
 void print_value_of_node(valset_u val, enum x86_op_datatype datatype) {
 	switch (datatype) {
 		case op_byte:

@@ -2,6 +2,7 @@
 #include "reverse_exe.h"
 
 void jmp_handler(re_list_t *instnode){
+#if 0
 
 	x86_insn_t *inst, *previnst;
 	x86_op_t *srcopd;
@@ -43,10 +44,12 @@ void jmp_handler(re_list_t *instnode){
 
 	re_resolve(&re_deflist, &re_uselist, &re_instlist);
 	print_info_of_current_inst(instnode);
+#endif
 }
 
 
 void jmp_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist){
+#if 0
 	x86_insn_t *previnst;
 	re_list_t *entry;
 	re_list_t *dst[NOPD], *src[NOPD];
@@ -71,9 +74,26 @@ void jmp_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist)
 		assign_use_value(src[0], vt);
 		add_to_uselist(src[0], re_uselist);
 	}
+#endif
 }
 
+void ja_handler(re_list_t *instnode){
 
+	cs_insn* inst;
+	inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index;
+
+	return;
+}
+
+void ja_resolver(re_list_t* instnode, re_list_t *re_deflist, re_list_t *re_uselist) {
+
+	cs_insn* inst;
+	inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index;
+
+	return;
+}
+
+/*
 void jcc_handler(re_list_t *instnode){
 
 	x86_insn_t* inst;
@@ -141,7 +161,6 @@ void jcc_handler(re_list_t *instnode){
 
 	assert(0);
 }
-
 
 void jcc_resolver(re_list_t* instnode, re_list_t *re_deflist, re_list_t *re_uselist) {
 
@@ -211,8 +230,9 @@ void jcc_resolver(re_list_t* instnode, re_list_t *re_deflist, re_list_t *re_usel
 
 	assert(0);
 }
+*/
 
-
+#if 0
 void call_handler(re_list_t *instnode){
 	// push eip
 	x86_insn_t *inst, *previnst;
@@ -510,3 +530,4 @@ void return_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_useli
 	}
 
 }
+#endif

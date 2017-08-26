@@ -15,14 +15,15 @@ void print_instnode(inst_node_t *instnode);
 void print_assembly(cs_insn *inst);
 
 void print_info_of_current_inst(re_list_t *inst);
-/*
-void log_instructions(x86_insn_t *instlist, unsigned instnum);
 
-void print_reg(x86_reg_t reg);
+void print_operand(cs_x86_op opd);
 
-void print_operand(x86_op_t opd);
+void print_reg(x86_reg reg);
 
 void print_registers(coredata_t *coredata);
+
+/*
+void log_instructions(x86_insn_t *instlist, unsigned instnum);
 
 void print_operand_info(int opd_count, ...);
 
@@ -45,7 +46,6 @@ void print_value_of_node(valset_u val, enum x86_op_datatype datatype);
 void print_usenode(use_node_t *usenode);
 
 void print_defnode(def_node_t *defnode);
-
 
 void print_node(re_list_t *node);
 */

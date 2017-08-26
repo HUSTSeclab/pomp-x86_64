@@ -47,32 +47,6 @@
 #define MAXROM 1000
 #endif
 
-
-typedef union valset_struct{
-	unsigned char byte; 	 /* 1-byte */
-	unsigned short word; 	 /* 2-byte */
-	unsigned long dword; 	 /* 4-byte */
-	unsigned long qword[2];	 /* 8-byte */
-	unsigned long dqword[4]; /* 16-byte*/
-}valset_u; 
-
-#define MAX_REG_IN_INST 0x6
-
-typedef struct opv{
-	int reg_num; 
-	valset_u val; 
-}opv_t;
-
-typedef struct operand_val{
-	size_t regnum; 
-	opv_t regs[MAX_REG_IN_INST];
-}operand_val_t; 
-
-typedef struct opval_list{
-	int log_num; 
-	operand_val_t *opval_list;
-}opval_list_t; 
-
 enum nodetype{
 	InstNode = 0x01,
 	DefNode,

@@ -7,7 +7,7 @@
 #include "access_memory.h"
 #include "elf_core.h"
 #include "elf_binary.h"
-//#include "insthandler.h"
+#include "insthandler.h"
 #include "disassemble.h"
 #include "thread_selection.h"
 #include "inst_data.h"
@@ -83,7 +83,7 @@ coredata_t * load_coredump(elf_core_info *core_info, elf_binary_info *binary_inf
 	threadnum = select_thread(core_info, binary_info);
 
 	if(re_ds.root){
-		//print_operand(*re_ds.root);
+		print_operand(*re_ds.root);
 	}
 
 	memcpy(coredata->corereg.regs,
@@ -214,7 +214,7 @@ unsigned long load_trace(elf_core_info *core_info, elf_binary_info *binary_info,
 		// So if input is bigger than 0x80000000, it will return 0x7fffffff
 		address = (Elf32_Addr)strtoll(line, NULL, 16);
 
-		printf("The address of the current instruction is 0x%x\n", address);
+		//LOG(stdout, "The address of the current instruction is 0x%x\n", address);
 
 		offset = get_offset_from_address(core_info, address);
 

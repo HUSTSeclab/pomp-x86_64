@@ -15,6 +15,46 @@
 //#include "re_alias.h"
 //#include "heuristics.h"
 
+// fetch property from cs_insn pointer
+
+// fetch property from x86_cs_op
+#define RE_X86_OP_TYPE(opd) \
+	((opd).type)
+
+#define RE_X86_OP_ACCESS(opd) \
+	((opd).access)
+
+#define RE_X86_REG_ID(opd) \
+	((opd).reg)
+
+#define RE_X86_IMM_VALUE(opd) \
+	((opd).imm)
+
+#define	RE_X86_MEM_SEG(opd) \
+	((opd).mem.segment)
+
+#define	RE_X86_MEM_BASE(opd) \
+	((opd).mem.base)
+
+#define	RE_X86_MEM_INDEX(opd) \
+	((opd).mem.index)
+
+#define	RE_X86_MEM_SCALE(opd) \
+	((opd).mem.scale)
+
+#define	RE_X86_MEM_DISP(opd) \
+	((opd).mem.disp)
+
+#define x86_opd_is_register(opd) \
+	((opd)->type == op_register)
+
+#define x86_opd_is_esp(opd) \
+	((opd)->type == op_register && (strcmp(opd->data.reg.name, "esp") == 0))
+
+#define x86_opd_is_ebp(opd) \
+	((opd)->type == op_register && (strcmp(opd->data.reg.name, "ebp") == 0))
+
+
 typedef struct op_index_pair{
 	enum x86_insn type;
 	int index;
@@ -55,15 +95,6 @@ extern post_resolve_heuristic_func post_resolve_heuristics[];
 	(regopd)->datatype = op_datatype; \
 	(regopd)->access = op_access; \
 	(regopd)->data.reg = oreg;
-
-#define x86_opd_is_register(opd) \
-	((opd)->type == op_register)
-
-#define x86_opd_is_esp(opd) \
-	((opd)->type == op_register && (strcmp(opd->data.reg.name, "esp") == 0))
-
-#define x86_opd_is_ebp(opd) \
-	((opd)->type == op_register && (strcmp(opd->data.reg.name, "ebp") == 0))
 
 #define exact_same_regs(reg1, reg2) \
 	(reg1.id == reg2.id)
@@ -208,7 +239,8 @@ void return_handler(re_list_t *instnode);
 
 void jmp_handler(re_list_t *instnode);
 
-void jcc_handler(re_list_t *instnode);
+//void jcc_handler(re_list_t *instnode);
+void ja_handler(re_list_t *instnode);
 
 
 void push_handler(re_list_t *instnode);
@@ -361,7 +393,8 @@ void return_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_useli
 
 void jmp_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist);
 
-void jcc_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist);
+//void jcc_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist);
+void ja_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist);
 
 
 void push_resolver(re_list_t* inst, re_list_t *re_deflist, re_list_t *re_uselist);

@@ -9,19 +9,47 @@
 #include "insthandler.h"
 
 
+// function points table for instruction resolver
+// Be careful! If you uncomment one instruction type in the middle,
+// please modify all the following entries
 op_index_pair_t opcode_index_tab[]={
-	{X86_INS_INVALID, 0}
+//	{X86_INS_INVALID, 0}
+	{X86_INS_JMP, 0},
+	{X86_INS_JA, 1},
+	//{X86_INS_CALL, 2}
+	{X86_INS_TEST, 2},
+	{X86_INS_CMP, 3}
 };
 
 const int ninst = sizeof(opcode_index_tab) / sizeof (op_index_pair_t);
+
+resolver_func inst_resolver[] = {
+	&jmp_resolver,		//0
+	&ja_resolver, 		//1
+	//&call_resolver 		//2
+	&test_resolver, 	//28
+	&cmp_resolver  	//29
+};
+
+handler_func inst_handler[] = {
+	&jmp_handler,		//0
+	&ja_handler,		//1
+	//&call_handler,		//2
+	&test_handler, 		//28
+	&cmp_handler  	//29
+};
+/*
+post_resolve_heuristic_func post_resolve_heuristics[] = {
+        &jmp_post_res, //0
+        &ja_post_res, //1
+        &call_post_res //2
+};
+*/
 
 #if 0
 #define insn_systems 0xE000
 
 
-// function points table for instruction resolver
-// Be careful! If you uncomment one instruction type in the middle,
-// please modify all the following entries
 op_index_pair_t opcode_index_tab[]={
 	/* insn_controlflow */
 	{insn_jmp,    	0x00},
