@@ -18,7 +18,8 @@ op_index_pair_t opcode_index_tab[]={
 	{X86_INS_JA, 1},
 	//{X86_INS_CALL, 2}
 	{X86_INS_TEST, 2},
-	{X86_INS_CMP, 3}
+	{X86_INS_CMP, 3},
+	{X86_INS_PXOR, 4}
 };
 
 const int ninst = sizeof(opcode_index_tab) / sizeof (op_index_pair_t);
@@ -28,7 +29,8 @@ resolver_func inst_resolver[] = {
 	&ja_resolver, 		//1
 	//&call_resolver 		//2
 	&test_resolver, 	//28
-	&cmp_resolver  	//29
+	&cmp_resolver,  	//29
+	&pxor_resolver,		//51
 };
 
 handler_func inst_handler[] = {
@@ -36,7 +38,8 @@ handler_func inst_handler[] = {
 	&ja_handler,		//1
 	//&call_handler,		//2
 	&test_handler, 		//28
-	&cmp_handler  	//29
+	&cmp_handler,  		//29
+	&pxor_handler		//51
 };
 /*
 post_resolve_heuristic_func post_resolve_heuristics[] = {

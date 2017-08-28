@@ -2,7 +2,7 @@
 #include "insthandler.h"
 #include "reverse_exe.h"
 
-/*
+
 void ptest_handler(re_list_t* instnode){
 	test_handler(instnode);
 }
@@ -10,41 +10,39 @@ void ptest_handler(re_list_t* instnode){
 void ptest_resolver(re_list_t* inst, re_list_t* deflist, re_list_t* uselist){
 	test_resolver(inst, deflist, uselist);
 }
-*/
+
 void pxor_handler(re_list_t* instnode){
-#if 0
-	x86_insn_t* inst;
-	x86_op_t *src, *dst;
+	cs_insn* inst;
+	cs_x86_op *src, *dst;
 	re_list_t re_deflist, re_uselist, re_instlist;  	
 	re_list_t *def, *usedst, *usesrc;
-	valset_u tempval; 
+	valset_u tempval;
 
         inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index;
+	//	for debugginf use	
+	print_all_operands(inst);
+
 	dst = x86_get_dest_operand(inst);
 	src = x86_get_src_operand(inst);
-
-	//	for debugginf use	
-	print_operand_info(inst->operand_count, dst, src);
 
 	INIT_LIST_HEAD(&re_deflist.deflist);
 	INIT_LIST_HEAD(&re_uselist.uselist);
 	INIT_LIST_HEAD(&re_instlist.instlist);	
-	
 	// through resdeflist, we could link all the entry 
 	// needed to  be resolved together
-	switch(get_operand_combine(inst)){
+	switch(get_operand_combine(inst)) {
 		case dest_register_src_register:
 			def = add_new_define(dst);
 			usedst = add_new_use(dst, Opd);
 			usesrc = add_new_use(src, Opd);
 
-			if(same_reg(dst, src)){
+			if(SAME_REG(*dst, *src)){
 				memset(&tempval, 0, sizeof(tempval));
 				assign_def_after_value(def, tempval);
-				//list_add(&def->deflist, &re_deflist.deflist);
 				add_to_deflist(def, &re_deflist);
 			}
 			break;
+#if 0
 		case dest_register_src_expression:
 			def = add_new_define(dst);
 			usedst = add_new_use(dst, Opd);
@@ -59,19 +57,18 @@ void pxor_handler(re_list_t* instnode){
 		default:
 			LOG(stdout, "dst type %d src type %d\n", dst->type, src->type);
 			assert(0);
+#endif
 	}
 
-	//list_add(&instnode->instlist, &re_instlist.instlist);
 	add_to_instlist(instnode, &re_instlist);
 
-	re_resolve(&re_deflist, &re_uselist, &re_instlist);
+	//re_resolve(&re_deflist, &re_uselist, &re_instlist);
 	
-	pxor_post_heuristics(instnode, &re_instlist, &re_uselist, &re_deflist); 
+	//pxor_post_heuristics(instnode, &re_instlist, &re_uselist, &re_deflist); 
 
-	re_resolve(&re_deflist, &re_uselist, &re_instlist);
+	//re_resolve(&re_deflist, &re_uselist, &re_instlist);
 
-	print_info_of_current_inst(instnode);
-#endif
+	//print_info_of_current_inst(instnode);
 }
 
 void pxor_post_heuristics(re_list_t *instnode, re_list_t *instlist, re_list_t *uselist, re_list_t *deflist){

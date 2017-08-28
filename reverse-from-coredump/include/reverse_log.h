@@ -22,13 +22,13 @@ void print_reg(x86_reg reg);
 
 void print_registers(coredata_t *coredata);
 
+void print_all_operands(cs_insn *inst);
+
+void print_info_of_instruction(cs_insn *inst);
+
+void log_instructions(cs_insn *instlist, unsigned instnum);
+
 /*
-void log_instructions(x86_insn_t *instlist, unsigned instnum);
-
-void print_operand_info(int opd_count, ...);
-
-void print_all_operands(x86_insn_t *inst);
-
 void print_deflist(re_list_t *re_deflist);
 
 void print_uselist(re_list_t *re_uselist);
@@ -38,8 +38,6 @@ void print_instlist(re_list_t *re_instlist);
 void print_umemlist(re_list_t *re_umemlist);
 
 void print_corelist(re_list_t *re_list);
-
-void alias_print_info_of_current_inst(re_list_t *inst);
 
 void print_value_of_node(valset_u val, enum x86_op_datatype datatype);
 

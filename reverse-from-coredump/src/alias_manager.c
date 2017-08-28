@@ -3,16 +3,18 @@
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
+#include <setjmp.h>
+
 #include "global.h"
 #include "disassemble.h"
 #include "insthandler.h"
 #include "reverse_exe.h"
 #include "inst_opd.h"
-#include "re_alias.h"
+//#include "re_alias.h"
 #include "reverse_log.h"
 #include "inst_opd.h"
-#include <setjmp.h>
 
+#if 0
 #define REPLACE_HEAD(oldhead, newhead) \
 	oldhead->next->prev = newhead;\
 	oldhead->prev-Next = newhead; 
@@ -230,6 +232,7 @@ void fork_corelist(re_list_t *newhead, re_list_t *oldhead) {
 		list_add(&newnode->list, &newhead->list);
 	}
 }
+#endif
 
 
 void delete_corelist(re_list_t *head) {
@@ -242,7 +245,7 @@ void delete_corelist(re_list_t *head) {
 	}
 }
 
-
+#if 0
 void get_element_of_exp(re_list_t* exp, re_list_t ** index, re_list_t ** base){
 
 	re_list_t* entry;
@@ -356,8 +359,4 @@ bool ok_to_check_alias(re_list_t *exp) {
 
 	return true;
 }
-
-
-
-
-
+#endif

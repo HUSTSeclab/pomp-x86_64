@@ -6,13 +6,13 @@
 
 #include "global.h"
 #include "disassemble.h"
-//#include "insthandler.h"
+#include "insthandler.h"
 #include "reverse_exe.h"
-//#include "inst_opd.h"
+#include "inst_opd.h"
 //#include "solver.h"
 //#include "bin_alias.h"
 
-#if 0
+/*
 re_list_t * find_next_def_of_def(re_list_t *def, int *type) __attribute__ ((alias("find_next_def_of_use")));
 
 re_list_t * find_prev_def_of_def(re_list_t *def, int *type) __attribute__ ((alias("find_prev_def_of_use")));
@@ -20,7 +20,7 @@ re_list_t * find_prev_def_of_def(re_list_t *def, int *type) __attribute__ ((alia
 re_list_t * find_next_use_of_def(re_list_t *def, int *type) __attribute__ ((alias("find_next_use_of_use")));
 
 re_list_t * find_prev_use_of_def(re_list_t *def, int *type) __attribute__ ((alias("find_prev_use_of_use")));
-
+*/
 
 unsigned maxfuncid(void){
 
@@ -36,6 +36,7 @@ unsigned maxfuncid(void){
 	return id;
 }
 
+#if 0
 re_list_t * lookfor_inst_nexttocall(re_list_t* instnode){
 
 	re_list_t *entry;
@@ -612,12 +613,11 @@ size_t size_of_node(re_list_t* node){
 	assert("You can only get size of use node or def node" && 0);
 	return 0;
 }
-
-
+#endif
 
 
 //add new use to the main link; checked
-re_list_t * add_new_use(x86_op_t * opd, enum u_type type){
+re_list_t * add_new_use(cs_x86_op * opd, enum u_type type){
 
 	re_list_t * newnode;
 	re_list_t * nextdef;
@@ -652,9 +652,9 @@ re_list_t * add_new_use(x86_op_t * opd, enum u_type type){
 
 	//insert new node into main list
 	list_add(&newnode->list, &re_ds.head.list);
-
+/*
 	//the use is an immediate value;
-	if(opd->type == op_immediate){
+	if(RE_X86_OPD_IS_IMM(*opd)){
 		get_immediate_from_opd(opd, &newuse->val);
 		newuse->val_known = true;
 		goto solve;
@@ -681,7 +681,7 @@ re_list_t * add_new_use(x86_op_t * opd, enum u_type type){
 			assign_use_value(newnode, CAST2_DEF(nextdef->node)->beforeval);
 		}
 	}
-
+*/
 solve:
 #ifdef WITH_SOLVER
 	CAST2_USE(newnode->node)->addresscst = NULL;
@@ -692,7 +692,7 @@ solve:
 }
 
 
-re_list_t * add_new_define(x86_op_t * opd){
+re_list_t * add_new_define(cs_x86_op * opd){
 
 	re_list_t * newnode;
 	re_list_t * nextdef;
@@ -726,7 +726,7 @@ re_list_t * add_new_define(x86_op_t * opd){
 
 	//insert new node into main list
 	list_add(&newnode->list, &re_ds.head.list);
-
+/*
 	nextdef = find_next_def_of_def(newnode, &type);
 
 	//check if the use has been killed before
@@ -746,7 +746,7 @@ re_list_t * add_new_define(x86_op_t * opd){
 				assign_def_after_value(newnode, CAST2_DEF(nextdef->node)->beforeval);
 		}
 	}
-
+*/
 #ifdef WITH_SOLVER
 	CAST2_DEF(newnode->node)->addresscst = NULL;
 	CAST2_DEF(newnode->node)->beforeconst = false;
@@ -756,7 +756,7 @@ re_list_t * add_new_define(x86_op_t * opd){
 
 	return newnode;
 }
-#endif
+
 
 re_list_t * add_new_inst(unsigned index){
 
@@ -796,7 +796,6 @@ re_list_t * add_new_inst(unsigned index){
 	return newnode;
 }
 
-#if 0
 void assign_def_before_value(re_list_t * def, valset_u val){
 
 	memcpy( &(CAST2_DEF(def->node)->beforeval),
@@ -807,8 +806,8 @@ void assign_def_before_value(re_list_t * def, valset_u val){
 	//check the resolved values against the ground truth log
 	//to aid the debugging process
 	//do not perform correctness check when verifying alias
-        if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-	        correctness_check(find_inst_of_node(def));
+        //if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
+	//        correctness_check(find_inst_of_node(def));
 }
 
 void assign_def_after_value(re_list_t * def, valset_u val){
@@ -824,8 +823,8 @@ void assign_def_after_value(re_list_t * def, valset_u val){
 	//check the resolved values against the ground truth log
 	//to aid the debugging process
 	//do not perform correctness check when verifying alias
-	if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-		correctness_check(find_inst_of_node(def));
+	//if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
+	//	correctness_check(find_inst_of_node(def));
 }
 
 void assign_use_value(re_list_t *use, valset_u val) {
@@ -845,10 +844,12 @@ void assign_use_value(re_list_t *use, valset_u val) {
 	//check the resolved values against the ground truth log
 	//to aid the debugging process
 	//do not perform correctness check when verifying alias
-	if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
-		correctness_check(find_inst_of_node(use));
+	//if(re_ds.rec_count == 0 && re_ds.oplog_list.log_num > 0)
+	//	correctness_check(find_inst_of_node(use));
 }
 
+
+#if 0
 //search for the use corresponding before a specific define
 static void def_before_pollute_use(re_list_t *def, re_list_t *re_instlist){
 
@@ -1457,35 +1458,6 @@ re_list_t * find_inst_of_node(re_list_t *node) {
 	}
 	return NULL;
 }
-
-bool check_node_in_list(re_list_t *node, re_list_t *list) {
-	re_list_t *temp;
-	switch (node->node_type) {
-	case InstNode:
-		list_for_each_entry(temp, &list->instlist, instlist) {
-			if (temp == node) {
-				return true;
-			}
-		}
-		break;
-	case UseNode:
-		list_for_each_entry(temp, &list->uselist, uselist) {
-			if (temp == node) {
-				return true;
-			}
-		}
-		break;
-	case DefNode:
-		list_for_each_entry(temp, &list->deflist, deflist) {
-			if (temp == node) {
-				return true;
-			}
-		}
-		break;
-	}
-	return false;
-}
-
 
 void re_resolve(re_list_t *re_deflist, re_list_t *re_uselist, re_list_t *re_instlist) {
 
@@ -2576,9 +2548,37 @@ bool node1_add_before_node2(re_list_t *node1, re_list_t* node2){
 	return node1->id < node2->id ? true : false;
 }
 
-
+#endif
 void destroy_corelist() {
 	delete_corelist(&re_ds.head);
+}
+
+bool check_node_in_list(re_list_t *node, re_list_t *list) {
+	re_list_t *temp;
+	switch (node->node_type) {
+	case InstNode:
+		list_for_each_entry(temp, &list->instlist, instlist) {
+			if (temp == node) {
+				return true;
+			}
+		}
+		break;
+	case UseNode:
+		list_for_each_entry(temp, &list->uselist, uselist) {
+			if (temp == node) {
+				return true;
+			}
+		}
+		break;
+	case DefNode:
+		list_for_each_entry(temp, &list->deflist, deflist) {
+			if (temp == node) {
+				return true;
+			}
+		}
+		break;
+	}
+	return false;
 }
 
 
@@ -2626,6 +2626,7 @@ void remove_from_instlist(re_list_t *entry, re_list_t *listhead) {
        }
 }
 
+#if 0
 void zero_valset(valset_u *vt) {
 	memset(vt, 0, sizeof(valset_u));
 }

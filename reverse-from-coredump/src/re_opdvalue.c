@@ -1,11 +1,10 @@
 #include "global.h"
-#include "ia32_reg.h" // obtain from libdisasm
 #include "reverse_exe.h"
 #include "inst_opd.h"
 #include "reverse_log.h"
 #include "insthandler.h"
 
-
+#if 0
 // translate from the id of register in the libdisasm to the index in sys/reg.h 
 // only applied to base register
 int get_index_from_x86_reg_t(x86_reg_t reg){
@@ -473,4 +472,32 @@ void convert_offset_to_exp(x86_op_t *opd) {
 		memset(&opd->data.expression, 0, sizeof(x86_ea_t));
 		opd->data.expression.disp = temp;
 	}
+}
+#endif
+
+cs_x86_op * x86_operand_index( cs_insn *insn, int index ) {
+	cs_x86 *x86;
+	cs_x86_op *op = NULL;
+	// detail can be NULL on "data" instruction if SKIPDATA option is turned ON
+	if (insn->detail == NULL)
+		return op;
+
+	x86 = &(insn->detail->x86);
+
+	if (x86->op_count >= index) {
+		op = x86->operands + (index - 1);
+	}
+	return op;
+}
+
+cs_x86_op * x86_operand_1st( cs_insn *insn ){
+	return x86_operand_index(insn, 1);
+}
+
+cs_x86_op * x86_operand_2nd( cs_insn *insn ){
+	return x86_operand_index(insn, 2);
+}
+
+cs_x86_op * x86_operand_3rd( cs_insn *insn ){
+	return x86_operand_index(insn, 3);
 }

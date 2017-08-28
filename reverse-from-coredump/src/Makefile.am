@@ -19,13 +19,10 @@ handlers_FILES = handler_controlflow.c handler_comparison.c handler_sse.c
 #handler_flag_manip.c
 #handler_interrupt.c
 
-reverse_SOURCES = reverse_execution.c global.c process_core.c process_binary.c access_memory.c utils.c process_inst_data.c process_thread.c disassemble.c reverse_instructions.c re_dsmanager.c re_insttable.c reverse_log.c $(handlers_FILES)
-
+reverse_SOURCES = reverse_execution.c global.c process_core.c process_binary.c access_memory.c utils.c process_inst_data.c process_thread.c disassemble.c reverse_instructions.c re_dsmanager.c re_insttable.c reverse_log.c re_opdvalue.c alias_manager.c $(handlers_FILES)
 # solver.c
-# alias_manager.c
 # heuristics.c
 # inst_handle_resolve.c
 # re_mem_alias.c
-# re_opdvalue.c
 # analyze_result.c
 # bin_alias.c

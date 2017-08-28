@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include <stdarg.h>
-#include <malloc.h>
+#include <unistd.h>
 #include <assert.h>
 #include <string.h>
 
@@ -22,7 +21,10 @@ void print_reg(x86_reg reg) {
 
 void print_assembly(cs_insn *inst){
 	if (!inst) return;
-	LOG(stdout, "Current Instruction is 0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
+	LOG(stdout, "Current Instruction is 0x%x" PRIx32 ":\t%s\t%s\n",
+	    (unsigned int)RE_X86_INST_ADDR(*inst),
+	    RE_X86_INST_MNEMONIC(*inst),
+	    RE_X86_INST_OPSTR(*inst));
 }
 
 void print_operand(cs_x86_op opd){
@@ -41,12 +43,12 @@ void print_operand(cs_x86_op opd){
 		LOG(stderr, "\t%s\n", "Invalid Operand Type");
 		break;
 	case X86_OP_REG:
-		LOG(stdout, "\t");
+		LOG(stdout, "\toperand.type: ");
 		print_reg(RE_X86_REG_ID(opd));
 		LOG(stdout, "\n");
 		break;
 	case X86_OP_IMM:
-		LOG(stdout, "\t%x\n", (unsigned int)RE_X86_IMM_VALUE(opd));
+		LOG(stdout, "\toperand.type: IMM 0x%x\n", (unsigned int)RE_X86_IMM_VALUE(opd));
 		break;
 	case X86_OP_MEM:
 		LOG(stdout, "\toperand.type: MEM\n");
@@ -79,30 +81,27 @@ void print_registers(coredata_t *coredata){
     LOG(stdout, "\n");
 }
 
-/*
-void print_operand_info(int opd_count, ...){
-    va_list arg_ptr;
-    x86_op_t *opd;
-    va_start(arg_ptr, opd_count);
-    int i = 0;
-    LOG(stdout, "DEBUG: Operand num is %d\n", opd_count);
-    for (i=0; i<opd_count; i++) {
-        LOG(stdout, "DEBUG: %dth operand - ", i+1);
-        opd=va_arg(arg_ptr, x86_op_t *);
-        if (opd != NULL) {
-            print_operand(*opd);
-        } else {
-            LOG(stdout, "NULL");
-        }
-        LOG(stdout, "\n");
-    }
-    va_end(arg_ptr);
-}
-*/
-
 void print_all_operands(cs_insn *inst) {
+	int count, i;
+	cs_x86 *x86;
+
+	// detail can be NULL on "data" instruction if SKIPDATA option is turned ON
+	if (inst->detail == NULL)
+		return;
+
+	x86 = &(inst->detail->x86);
+
+	if (x86->op_count)
+		LOG(stdout, "op_count: %u\n", x86->op_count);
+	for (i = 0; i < x86->op_count; i++) {
+		print_operand(x86->operands[i]);
+	}
 }
 
+void print_info_of_instruction(cs_insn *inst) {
+	print_assembly(inst);
+	print_all_operands(inst);
+}
 
 #if 0
 void print_value_of_node(valset_u val, enum x86_op_datatype datatype) {
@@ -373,22 +372,30 @@ void print_info_of_current_inst(re_list_t *inst){
 	LOG(stdout, "~~~~~~~~~~~~~~~~~~~~End of Current Inst info~~~~~~~~~~~~~~~~~~~~\n");
 }
 
-#if 0
-// log all the instructions to one file called "instructions"
-void log_instructions(x86_insn_t *instlist, unsigned instnum){
+// log all the instructions to one file, called "instructions"
+// it will check exist of this file
+void log_instructions(cs_insn *instlist, unsigned instnum){
+
+	if (access("instruction", F_OK) != -1) {
+		LOG(stdout, "WARNING: instruction file exists, it will be erased\n");
+		return;
+	} 	
+
 	FILE *file;
+	int i;
+
 	if ((file=fopen("instructions", "w")) == NULL) {
 		LOG(stderr, "ERROR: instructions file open error\n");
 		assert(0);
 	}
-	char inst_buf[MAX_INSN_STRING+15];
-	int i;
+
 	for (i=0;i<instnum;i++) {
-		x86_format_insn(&instlist[i], inst_buf, MAX_INSN_STRING, intel_syntax);
-		fprintf(file, "0x%08x:\t%s\n", instlist[i].addr, inst_buf);
+		LOG(file, "Current Instruction is 0x%" PRIx32 ":\t%s\t%s\n", 
+			(unsigned int)instlist[i].address, instlist[i].mnemonic, instlist[i].op_str);
 	}
 }
 
+#if 0
 void print_maxfuncid() {
 	LOG(stdout, "=================================================\n");
 	LOG(stdout, "Max Function ID is %d\n", maxfuncid());

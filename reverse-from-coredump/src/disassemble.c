@@ -19,6 +19,19 @@ csh handle;
 static void print_string_hex(char *comment, unsigned char *str, size_t len);
 static void print_insn_detail(csh ud, cs_mode mode, cs_insn *ins);
 
+// 0 if every malloc successes, -1 if any malloc encounters error
+static int x86_copy_inst_info(cs_insn *dest, cs_insn *src) {
+	memcpy(dest, src, sizeof(cs_insn));
+	
+	if ((dest->detail = (cs_detail *)malloc(sizeof(cs_detail))) == NULL) {
+		LOG(stderr, "ERROR: Malloc Error\n");
+		return -1;
+	}
+
+	memcpy(dest->detail, src->detail, sizeof(cs_detail));
+	return 0;
+}
+
 // user-provided memory space for cs_insn
 bool disasm_one_inst(char *buf, size_t buf_size, int pos, cs_insn *inst){
 	cs_insn *insn;
@@ -35,9 +48,12 @@ bool disasm_one_inst(char *buf, size_t buf_size, int pos, cs_insn *inst){
 	count = cs_disasm(handle, buf, buf_size, pos, 0, &insn);
 
 	if (count) {
-		memcpy(inst, insn, sizeof(cs_insn));
-		//LOG(stdout, "0x%" PRIx32 ":\t%s\t%s\n", (unsigned int)inst->address, inst->mnemonic, inst->op_str);
+		//LOG(stdout, "0x%" PRIx32 ":\t%s\t%s\n",
+		//    (unsigned int)RE_X86_INST_TYPE(*inst),
+		//    RE_X86_INST_MNEMONIC(*inst),
+		//    RE_X86_INST_OP_STR(*inst));
 		//print_insn_detail(handle, platform.mode, inst);
+		x86_copy_inst_info(inst, insn);
 		cs_free(insn, count);
 	} else {
 		LOG(stdout, "****************\n");

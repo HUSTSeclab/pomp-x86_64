@@ -11,11 +11,22 @@
 #include "access_memory.h"
 #include "reverse_log.h"
 #include "reverse_exe.h"
-//#include "inst_opd.h"
+#include "inst_opd.h"
 //#include "re_alias.h"
 //#include "heuristics.h"
 
 // fetch property from cs_insn pointer
+#define RE_X86_INST_TYPE(inst) \
+	((inst).id)
+
+#define RE_X86_INST_ADDR(inst) \
+	((inst).address)
+
+#define RE_X86_INST_MNEMONIC(inst) \
+	((inst).mnemonic)
+
+#define RE_X86_INST_OPSTR(inst) \
+	((inst).op_str)
 
 // fetch property from x86_cs_op
 #define RE_X86_OP_TYPE(opd) \
@@ -45,15 +56,12 @@
 #define	RE_X86_MEM_DISP(opd) \
 	((opd).mem.disp)
 
-#define x86_opd_is_register(opd) \
-	((opd)->type == op_register)
-
-#define x86_opd_is_esp(opd) \
-	((opd)->type == op_register && (strcmp(opd->data.reg.name, "esp") == 0))
-
-#define x86_opd_is_ebp(opd) \
-	((opd)->type == op_register && (strcmp(opd->data.reg.name, "ebp") == 0))
-
+//#define x86_opd_is_esp(opd) \
+//	((opd)->type == op_register && (strcmp(opd->data.reg.name, "esp") == 0))
+//
+//#define x86_opd_is_ebp(opd) \
+//	((opd)->type == op_register && (strcmp(opd->data.reg.name, "ebp") == 0))
+//
 
 typedef struct op_index_pair{
 	enum x86_insn type;
@@ -96,8 +104,8 @@ extern post_resolve_heuristic_func post_resolve_heuristics[];
 	(regopd)->access = op_access; \
 	(regopd)->data.reg = oreg;
 
-#define exact_same_regs(reg1, reg2) \
-	(reg1.id == reg2.id)
+#define EXACT_SAME_REG(reg1, reg2) \
+	(reg1 == reg2)
 
 #define reg1_alias_reg2(reg1, reg2) \
 	(reg1.alias == reg2.id)
@@ -117,35 +125,14 @@ extern post_resolve_heuristic_func post_resolve_heuristics[];
 #define overlap_mem(address1, size1, address2, size2) \
 	((address1+size1 > address2) && (address1+size1 <= address2+size2))
 
-#define reg1_reg2(dest, src) \
-	(x86_opd_is_register(dest) && x86_opd_is_register(src))
-
-#define reg1_exp2(dest, src) \
-	(x86_opd_is_register(dest) && (src->type == op_expression))
-
-#define exp1_reg2(dest, src) \
-	(x86_opd_is_register(src) && (dest->type == op_expression))
-
-#define off1_reg2(dest, src) \
-	((dest->type == op_offset) && (src->type == op_register))
-
-#define reg1_off2(dest, src) \
-	((dest->type == op_register) && (src->type == op_offset))
-
-#define exp1_imm2(dest, src) \
-	((dest->type ==op_expression) && (src->type == op_immediate))
-
-#define reg1_imm2(dest, src) \
-	((dest->type ==op_register) && (src->type == op_immediate))
-
-#define same_reg(dest, src) \
-	(reg1_reg2(dest, src) && exact_same_regs(dest->data.reg,src->data.reg))
-
-#define diff_regs(dest, src) \
-	(reg1_reg2(dest, src) && (!exact_same_regs(dest->data.reg,src->data.reg)))
-
 #define op_with_gs_seg(opd) \
 	(((opd)->flags & op_gs_seg) >> 8 == 6)
+
+#define SAME_REG(dest, src) \
+	(DST_REG_SRC_REG(dest, src) && EXACT_SAME_REG(RE_X86_REG_ID(dest), RE_X86_REG_ID(src)))
+
+#define DIFF_REGS(dest, src) \
+	(DST_REG_SRC_REG(dest, src) && (!EXACT_SAME_REG(RE_X86_REG_ID(dest), RE_X86_REG_ID(src))))
 
 enum expreg_status {
 	No_Reg = 0x0,
@@ -174,28 +161,56 @@ static inline enum expreg_status get_expreg_status(x86_ea_t exp){
 enum operand_status {
 	dest_register_src_register = 1,
 	dest_register_src_expression,
-	dest_register_src_offset,
+	dest_register_src_imm,
+	dest_expression_src_expression,
 	dest_expression_src_register,
-	dest_offset_src_register,
-	dest_expression_src_imm,
-	dest_register_src_imm
+	dest_expression_src_imm
 };
 
-/*
-static inline enum operand_status get_operand_combine(x86_insn_t *inst) {
-	x86_op_t *dst = x86_get_dest_operand(inst);
-	x86_op_t *src = x86_get_src_operand(inst);
-	if (reg1_reg2(dst, src)) return dest_register_src_register;
-	if (reg1_exp2(dst, src)) return dest_register_src_expression;
-	if (reg1_off2(dst, src)) return dest_register_src_offset;
-	if (exp1_reg2(dst, src)) return dest_expression_src_register;
-	if (off1_reg2(dst, src)) return dest_offset_src_register;
-	if (reg1_off2(dst, src)) return dest_register_src_offset;
-	if (exp1_imm2(dst, src)) return dest_expression_src_imm;
-	if (reg1_imm2(dst, src)) return dest_register_src_imm;
+#define RE_X86_OPD_IS_REG(opd) \
+	(RE_X86_OP_TYPE(opd) == X86_OP_REG)
+
+#define RE_X86_OPD_IS_EXP(opd) \
+	(RE_X86_OP_TYPE(opd) == X86_OP_MEM)
+
+#define RE_X86_OPD_IS_IMM(opd) \
+	(RE_X86_OP_TYPE(opd) == X86_OP_IMM)
+
+#define DST_REG_SRC_REG(dest, src) \
+	(RE_X86_OPD_IS_REG(dest) && RE_X86_OPD_IS_REG(src))
+
+#define DST_REG_SRC_EXP(dest, src) \
+	(RE_X86_OPD_IS_REG(dest) && RE_X86_OPD_IS_EXP(src))
+
+#define DST_REG_SRC_IMM(dest, src) \
+	(RE_X86_OPD_IS_REG(dest) && RE_X86_OPD_IS_IMM(src))
+
+#define DST_EXP_SRC_EXP(dest, src) \
+	(RE_X86_OPD_IS_EXP(dest) && RE_X86_OPD_IS_EXP(src))
+
+#define DST_EXP_SRC_REG(dest, src) \
+	(RE_X86_OPD_IS_EXP(dest) && RE_X86_OPD_IS_REG(src))
+
+#define DST_EXP_SRC_IMM(dest, src) \
+	(RE_X86_OPD_IS_EXP(dest) && RE_X86_OPD_IS_IMM(src))
+
+static inline enum operand_status get_operand_combine(cs_insn *inst) {
+	cs_x86_op *dest = x86_get_dest_operand(inst);
+	cs_x86_op *src = x86_get_src_operand(inst);
+	if (DST_REG_SRC_REG(*dest, *src))
+		return dest_register_src_register;
+	if (DST_REG_SRC_EXP(*dest, *src))
+		return dest_register_src_expression;
+	if (DST_REG_SRC_IMM(*dest, *src))
+		return dest_register_src_imm;
+	if (DST_EXP_SRC_EXP(*dest, *src))
+		return dest_expression_src_expression;
+	if (DST_EXP_SRC_REG(*dest, *src))
+		return dest_expression_src_register;
+	if (DST_EXP_SRC_IMM(*dest, *src))
+		return dest_expression_src_imm;
 	assert(0);
 }
-*/
 
 
 // instruction handlers

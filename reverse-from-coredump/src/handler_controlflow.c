@@ -82,6 +82,7 @@ void ja_handler(re_list_t *instnode){
 	cs_insn* inst;
 	inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index;
 
+	print_all_operands(inst);
 	return;
 }
 
@@ -90,6 +91,7 @@ void ja_resolver(re_list_t* instnode, re_list_t *re_deflist, re_list_t *re_useli
 	cs_insn* inst;
 	inst = re_ds.instlist + CAST2_INST(instnode->node)->inst_index;
 
+	print_all_operands(inst);
 	return;
 }
 
