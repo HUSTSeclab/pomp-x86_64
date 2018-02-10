@@ -46,8 +46,8 @@ unsigned long reverse_instructions(void){
 		if (handler_index >= 0) {
 			inst_handler[handler_index](curinst);
 		} else {
-			LOG(stdout, "instruction type %s\n", re_ds.instlist[index].mnemonic);
-			assert(0);
+			LOG(stderr, "Instruction %s needs implementation\n", re_ds.instlist[index].mnemonic);
+			//assert(0);
 		}
 
 		print_info_of_current_inst(curinst);
@@ -152,8 +152,8 @@ unsigned long reverse_instructions(void){
 	analyze_corelist();
 	print_umemlist(&re_ds.head);
 
-#endif
 	LOG(stdout, "Max Function Id is %d\n", maxfuncid());
+#endif
 	destroy_corelist();
 
 	return 0;    

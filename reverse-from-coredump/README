@@ -1,7 +1,6 @@
 # reverse-from-coredump
-Reverse Execution From CoreDump
 
-**Note that our tool only supports 32 bit now.**
+Reverse Execution From CoreDump
 
 ## Prerequirement
 
@@ -38,7 +37,7 @@ $ make
 
     $ ./src/reverse coredump binary_path inversed_instruction_trace inverse_reginfo xmm_log summary_lib
 
-**Make sure binary file and all the library files are in the binary_path**
+**Make sure the binary file and all the corresponding library files are in the `binary_path`**
 
 ### Test
 
@@ -52,3 +51,10 @@ $ ./src/reverse testsuites/latex2rtf/core testsuites/latex2rtf/ testsuites/latex
 $ make clean
 $ make distclean
 ```
+
+### ToDo List
+
+ - [ ] implement handlers for instructions in x86/x86_64
+ - [ ] check x86/x86_64 in the runtime and decide which handler to use
+ - [ ] implement the APIs used in the **alias verification**
+ - [ ] implement the APIs used in the **backward taint analysis**
